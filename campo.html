@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Ruta REFANIC</title>
+<meta name="theme-color" content="#0d6b63">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi Ruta">
+<link rel="apple-touch-icon" href="icono.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono.png">
+<link rel="manifest" href="campo.webmanifest">
+<style>
+:root{--bg:#eef2f1;--sf:#fff;--sf2:#f5f8f7;--ln:#d6dedc;--ink:#16302d;--mut:#5b6f6c;--ac:#0d6b63;--aci:#fff;--acs:#dcefec;
+--ok:#1f8a4c;--oks:#dff3e6;--wa:#a8690a;--was:#fbeed3;--bad:#b93a32;--bads:#fae1de}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#0f1918;--sf:#182523;--sf2:#1e2e2b;--ln:#2f4440;--ink:#e6efed;--mut:#9db1ad;--ac:#4fc0b3;--aci:#06211e;--acs:#1d3b37;
+--ok:#5fcb8a;--oks:#173526;--wa:#e6b257;--was:#3a2e14;--bad:#f08a80;--bads:#3d1f1c}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:76px}
+h1,h2,h3{margin:0;line-height:1.2}h1{font-size:21px}h3{font-size:16px;margin-bottom:8px}
+button,select,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+main{max-width:520px;margin:0 auto;padding:12px 12px 20px;display:flex;flex-direction:column;gap:10px}
+main.ancho{max-width:900px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:13px}
+.sub{color:var(--mut);font-size:13px}
+.fila{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.bar{height:10px;border-radius:99px;background:var(--sf2);border:1px solid var(--ln);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--ac)}
+.kpis{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}.kpis div{display:flex;flex-direction:column}
+.kpis b{font-size:21px}.kpis span{font-size:12px;color:var(--mut)}
+.slot{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--mut);margin:4px 2px 0;text-transform:uppercase}
+.cli{display:flex;flex-direction:column;gap:8px;border-left:5px solid var(--ln)}
+.cli.pedido{border-left-color:var(--ok)}.cli.sin{border-left-color:var(--wa)}.cli.no{border-left-color:var(--bad)}
+.cli b{font-size:15.5px}
+.foco{font-size:12.5px;color:var(--mut)}
+.foco em{font-style:normal;background:var(--acs);color:var(--ac);font-weight:600;border-radius:6px;padding:1px 7px;margin:2px 0 0 4px;display:inline-block}
+.foco.nc em{background:var(--was);color:var(--wa)}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.acts button{border:1px solid var(--ln);background:var(--sf2);border-radius:9px;padding:10px 4px;font-weight:600;font-size:13px}
+.acts button[aria-pressed=true][data-est=pedido]{background:var(--oks);border-color:var(--ok);color:var(--ok)}
+.acts button[aria-pressed=true][data-est=sin]{background:var(--was);border-color:var(--wa);color:var(--wa)}
+.acts button[aria-pressed=true][data-est=no]{background:var(--bads);border-color:var(--bad);color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.chips>span{font-weight:700;color:var(--mut)}
+.chips button{border:1px solid var(--ln);background:var(--sf);border-radius:99px;padding:5px 11px;font-size:12.5px}
+.chips button[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:var(--aci);font-weight:600}
+input[type=text],input[type=search],input[type=tel],input[type=date],select{background:var(--sf2);border:1px solid var(--ln);border-radius:9px;padding:8px 10px;max-width:100%}
+input[type=text],input[type=search]{width:100%}
+.pri{background:var(--ac);color:var(--aci);border:0;border-radius:11px;padding:12px 16px;font-weight:700}
+.sec{border:1px solid var(--ln);background:var(--sf2);border-radius:9px;padding:7px 12px;font-weight:600}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.pill.ok{background:var(--oks);color:var(--ok)}.pill.wa{background:var(--was);color:var(--wa)}.pill.bad{background:var(--bads);color:var(--bad)}
+.pill.mu{background:var(--sf2);color:var(--mut);border:1px solid var(--ln)}
+.msg{border-radius:11px;padding:11px 13px;font-weight:600;font-size:14px;background:var(--was);color:var(--wa)}
+.msg.ok{background:var(--oks);color:var(--ok)}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--ln);display:flex;justify-content:center;gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;max-width:130px;border:0;background:none;border-radius:10px;padding:9px 4px;font-weight:600;font-size:13px;color:var(--mut)}
+nav button[aria-current=page]{background:var(--acs);color:var(--ac)}
+.rb{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--ln)}
+.rb:first-child{border-top:0}.rb select{padding:6px 4px;font-size:13px}
+.rb .in{color:var(--wa);font-size:12px;font-weight:600}
+.guardar{position:sticky;bottom:70px;z-index:2}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th{text-align:left;color:var(--mut);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--ln)}
+td{padding:8px;border-bottom:1px solid var(--ln)}
+#toast{position:fixed;left:12px;right:12px;bottom:84px;margin:auto;max-width:480px;background:var(--bad);color:#fff;border-radius:11px;padding:11px 14px;font-weight:600;display:none;z-index:9}
+.okg{color:var(--ok);font-size:12px;font-weight:700;margin-left:6px}
+.cargando{text-align:center;color:var(--mut);padding:30px 0}
+</style>
+</head>
+<body>
+<main id="main"><div class="cargando">Cargando…</div></main>
+<nav id="nav" hidden></nav>
+<div id="toast" role="alert"></div>
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbyPv3S7k_WbKR2Xl1jOq0jpYnJY3ZXifyVDwFTHIUphiCdZ2u6LV02Kl_qI1LAMaBuV/exec';
+var K = '', PIN = '', U = null;
+try {
+  K = (new URLSearchParams(location.search).get('k') || '').replace(/[^A-Za-z0-9]/g, '');
+  if (K) localStorage.setItem('clave', K); else K = localStorage.getItem('clave') || '';
+} catch (e) {}
+var S = { tab: 'hoy', ruta: '', fecha: 0, dia: null, rb: null, cambios: {}, filtro: 'act', q: '' };
+var MOTIVOS = ['Venta', 'Retiro de producto', 'Atención especial'];
+var EXC = ['', 'Feriado', 'Vacaciones', 'Cambio de zona', 'Otro'];
+var FREC = [['S', 'Semanal'], ['Q1', 'Quincenal A'], ['Q2', 'Quincenal B'], ['M1', 'Mensual sem. 1'], ['M2', 'Mensual sem. 2'], ['M3', 'Mensual sem. 3'], ['M4', 'Mensual sem. 4']];
+var DIASC = ['Sin día', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function guardaLocal(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+function aFecha(n) { return new Date(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100, 12); }
+function aNum(d) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function sumar(n, k) { var d = aFecha(n); d.setDate(d.getDate() + k); return aNum(d); }
+function fechaTxt(n) { var d = aFecha(n); return d.getDate() + ' de ' + MESES[d.getMonth()]; }
+function aISO(n) { var s = String(n); return s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8); }
+function toast(t) { var e = $('toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(function () { e.style.display = 'none'; }, 4500); }
+function call(a, p) {
+  return fetch(API, {
+    method: 'POST', credentials: 'omit', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ k: K, pin: PIN, a: a, p: p || {} })
+  }).then(function (x) { return x.json(); }, function () {
+    throw new Error('Sin conexión. Revisa tu internet e intenta de nuevo.');
+  }).then(function (r) {
+    if (r && r.ok) return r.d;
+    throw new Error(r && r.error ? r.error : 'Sin respuesta del servidor.');
+  });
+}
+function falla(e) { toast(e.message || String(e)); }
+function cargando() { $('main').innerHTML = '<div class="cargando">Cargando…</div>'; }
+
+/* ---------- inicio y PIN ---------- */
+function inicio() {
+  if (!K) { $('main').innerHTML = '<div class="card"><h1>Mi Ruta REFANIC</h1><p>Abre la app desde tu enlace personal. Si no lo tienes, pídelo a tu supervisora.</p></div>'; return; }
+  PIN = guardaLocal('pin_' + K) || '';
+  if (PIN) entrar(); else pidePin('');
+}
+function pidePin(err) {
+  $('nav').hidden = true;
+  $('main').innerHTML = '<div class="card"><h1>Mi Ruta REFANIC</h1><p class="sub">Escribe tu PIN de 4 dígitos.</p>' +
+    (err ? '<div class="msg">' + esc(err) + '</div>' : '') +
+    '<form id="fpin" style="display:flex;gap:8px;margin-top:10px"><input type="tel" id="pin" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN" style="flex:1;min-width:0;font-size:20px;letter-spacing:.3em">' +
+    '<button class="pri" type="submit">Entrar</button></form></div>';
+  $('fpin').addEventListener('submit', function (e) { e.preventDefault(); PIN = $('pin').value.trim(); if (PIN) entrar(); });
+}
+function entrar() {
+  cargando();
+  call('init').then(function (d) {
+    U = d; guardaLocal('pin_' + K, PIN);
+    S.fecha = d.hoy; S.ruta = d.rutas.length ? d.rutas[0].codigo : '';
+    S.tab = d.rutas.length ? 'hoy' : 'equipo';
+    pintaNav(); ir(S.tab);
+  }).catch(function (e) { PIN = ''; guardaLocal('pin_' + K, ''); pidePin(e.message); });
+}
+function pintaNav() {
+  var t = [];
+  if (U.rutas.length) t.push(['hoy', 'Mi día'], ['semana', 'Mi semana'], ['rb', 'Mi ruta']);
+  if (U.vista) t.push(['equipo', 'Equipo']);
+  $('nav').innerHTML = t.map(function (x) { return '<button data-tab="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  $('nav').hidden = t.length < 2;
+}
+$('nav').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) ir(b.dataset.tab); });
+function ir(tab) {
+  if (S.tab === 'rb' && tab !== 'rb' && Object.keys(S.cambios).length) { toast('Tienes cambios sin guardar en Mi ruta.'); return; }
+  S.tab = tab;
+  [].forEach.call($('nav').children, function (b) { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  $('main').className = tab === 'equipo' ? 'ancho' : '';
+  cargando();
+  ({ hoy: cargaDia, semana: cargaSemana, rb: cargaRB, equipo: cargaEquipo })[tab]();
+}
+function selRuta() {
+  if (U.rutas.length < 2) return '<div class="sub">' + esc(U.rutas[0].nombre) + '</div>';
+  return '<select id="selruta" aria-label="Ruta">' + U.rutas.map(function (r) { return '<option value="' + esc(r.codigo) + '"' + (r.codigo === S.ruta ? ' selected' : '') + '>' + esc(r.nombre) + '</option>'; }).join('') + '</select>';
+}
+document.addEventListener('change', function (e) {
+  if (e.target.id === 'selruta') { S.ruta = e.target.value; S.cambios = {}; ir(S.tab); }
+});
+function navFecha() {
+  return '<div class="fila" style="margin-top:8px"><button class="sec" data-mov="-1" aria-label="Día anterior">‹</button>' +
+    '<b id="lblfecha"></b><button class="sec" data-mov="1" aria-label="Día siguiente">›</button></div>';
+}
+
+/* ---------- Mi dia ---------- */
+function cargaDia() {
+  call('dia', { ruta: S.ruta, fecha: S.fecha }).then(function (d) { S.dia = d; pintaDia(); }).catch(falla);
+}
+function resumen() {
+  var it = S.dia.items, r = { tot: it.length, marc: 0, vis: 0, ped: 0, cob: 0 };
+  it.forEach(function (x) { if (x.est) r.marc++; if (x.est === 'pedido' || x.est === 'sin') r.vis++; if (x.est === 'pedido') r.ped++; if (x.cob === 'si') r.cob++; });
+  return r;
+}
+function chips(txt) { return txt.split('|').filter(Boolean).map(function (f) { return '<em>' + esc(f) + '</em>'; }).join(''); }
+function tarjeta(x, i) {
+  var ed = S.dia.editable ? '' : ' disabled';
+  var h = '<div class="card cli ' + esc(x.est) + '" id="cli' + i + '"><div><b>' + esc(x.n) + '</b> <span class="sub num">' + esc(x.c) + '</span>' + (x.extra ? ' <span class="pill mu">Fuera de ruta</span>' : '') + '<span class="okg" id="okg' + i + '" aria-live="polite"></span></div>';
+  if (x.pend) h += '<div class="foco">En foco, pendiente:' + chips(x.pend) + '</div>';
+  if (x.nc) h += '<div class="foco nc">No compra:' + chips(x.nc) + '</div>';
+  h += '<div class="acts">' + [['pedido', 'Con pedido'], ['sin', 'Sin pedido'], ['no', 'No visitada']].map(function (e) {
+    return '<button data-i="' + i + '" data-est="' + e[0] + '" aria-pressed="' + (x.est === e[0]) + '"' + ed + '>' + e[1] + '</button>'; }).join('') + '</div>';
+  h += '<div class="chips"><span>Cobro</span>' + [['si', 'Cobré'], ['no', 'No cobré'], ['na', 'Sin saldo']].map(function (e) {
+    return '<button data-i="' + i + '" data-cob="' + e[0] + '" aria-pressed="' + (x.cob === e[0]) + '"' + ed + '>' + e[1] + '</button>'; }).join('') + '</div>';
+  if (x.est) {
+    h += '<div class="chips">' + MOTIVOS.map(function (m) { return '<button data-i="' + i + '" data-mot="' + esc(m) + '" aria-pressed="' + (x.mot === m) + '"' + ed + '>' + m + '</button>'; }).join('') + '</div>';
+    h += '<input type="text" id="obs' + i + '" data-obs="' + i + '" maxlength="300" placeholder="' + (x.est === 'no' ? '¿Por qué no se visitó? (opcional)' : 'Observación (opcional)') + '" value="' + esc(x.obs) + '" aria-label="Observación"' + ed + '>';
+  }
+  return h + '</div>';
+}
+function cabeceraDia() {
+  var r = resumen(), p = r.tot ? r.marc / r.tot * 100 : 0;
+  $('pbar').style.width = p + '%';
+  $('kmarc').textContent = r.marc + ' / ' + r.tot; $('kped').textContent = r.ped; $('kcob').textContent = r.cob;
+  $('kefe').textContent = (r.vis ? Math.round(r.ped / r.vis * 100) : 0) + '%';
+  $('fin').innerHTML = r.tot && r.marc === r.tot ? '<div class="msg ok">Día completo: ' + r.vis + ' de ' + r.tot + ' visitas, ' + r.ped + ' con pedido y ' + r.cob + ' cobros.</div>' : '';
+}
+function pintaDia() {
+  var d = S.dia, h = '<div class="card"><div class="fila"><h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1></div>' + selRuta() + navFecha() +
+    '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kmarc"></b><span>marcadas</span></div><div><b id="kped"></b><span>con pedido</span></div>' +
+    '<div><b id="kefe"></b><span>efectividad</span></div><div><b id="kcob"></b><span>cobros</span></div></div></div>';
+  if (d.exc) h += '<div class="msg">Día marcado como: ' + esc(d.exc) + '</div>';
+  if (!d.editable) h += '<div class="msg">Este día es solo de consulta.</div>';
+  if (!d.items.length) h += '<div class="card">No hay farmacias programadas para este día. Asigna tus clientes en <b>Mi ruta</b>.</div>';
+  var mun = null;
+  d.items.forEach(function (x, i) { if (x.m !== mun) { mun = x.m; h += '<div class="slot">' + esc(mun || 'Sin municipio') + '</div>'; } h += tarjeta(x, i); });
+  h += '<div id="fin"></div>';
+  $('main').innerHTML = h;
+  $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
+  cabeceraDia();
+}
+function guardaVisita(i) {
+  var x = S.dia.items[i];
+  call('visita', { ruta: S.ruta, fecha: S.dia.fecha, cliente: x.c, est: x.est, mot: x.mot, obs: x.obs, cob: x.cob })
+    .then(function () {
+      var g = $('okg' + i); if (!g) return;
+      g.textContent = 'Guardado ✓';
+      clearTimeout(guardaVisita['t' + i]);
+      guardaVisita['t' + i] = setTimeout(function () { var q = $('okg' + i); if (q) q.textContent = ''; }, 2500);
+    })
+    .catch(function (e) { falla(e); cargaDia(); });
+}
+$('main').addEventListener('click', function (e) {
+  var b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.mov) {
+    S.fecha = sumar(S.fecha, Number(b.dataset.mov));
+    if (S.tab === 'equipo') cargaEquipo(); else { cargando(); cargaDia(); }
+    return;
+  }
+  if (b.dataset.sem) { S.fecha = sumar(S.fecha, 7 * Number(b.dataset.sem)); cargando(); cargaSemana(); return; }
+  if (b.dataset.irdia) { S.fecha = Number(b.dataset.irdia); ir('hoy'); return; }
+  if (b.dataset.filtro) { S.filtro = b.dataset.filtro; pintaRB(); return; }
+  if (b.id === 'btnguardar') { guardaRB(); return; }
+  if (b.id === 'btncob') { guardaCobertura(); return; }
+  if (S.tab !== 'hoy' || b.dataset.i === undefined) return;
+  var i = Number(b.dataset.i), x = S.dia.items[i];
+  if (b.dataset.est) { x.est = x.est === b.dataset.est ? '' : b.dataset.est; if (!x.est) x.mot = ''; }
+  else if (b.dataset.cob) x.cob = x.cob === b.dataset.cob ? '' : b.dataset.cob;
+  else if (b.dataset.mot) x.mot = x.mot === b.dataset.mot ? '' : b.dataset.mot;
+  else return;
+  $('cli' + i).outerHTML = tarjeta(x, i);
+  cabeceraDia(); guardaVisita(i);
+});
+$('main').addEventListener('change', function (e) {
+  var t = e.target;
+  if (t.dataset.obs !== undefined) { var i = Number(t.dataset.obs); S.dia.items[i].obs = t.value; guardaVisita(i); return; }
+  if (t.dataset.exc) {
+    call('excepcion', { ruta: S.ruta, fecha: Number(t.dataset.exc), tipo: t.value }).then(cargaSemana).catch(falla); return;
+  }
+  if (t.dataset.rb) {
+    var c = S.rb.clientes[Number(t.dataset.rb)];
+    if (t.dataset.campo === 'dia') c[4] = Number(t.value); else c[5] = t.value;
+    S.cambios[c[0]] = 1; botonGuardar(); contadorRB();
+  }
+});
+$('main').addEventListener('input', function (e) { if (e.target.id === 'buscar') { S.q = e.target.value; listaRB(); } });
+
+/* ---------- Mi semana ---------- */
+function cargaSemana() {
+  call('semana', { ruta: S.ruta, fecha: S.fecha }).then(function (d) {
+    var h = '<div class="card"><h1>Mi semana</h1>' + selRuta() +
+      '<div class="fila" style="margin-top:8px"><button class="sec" data-sem="-1" aria-label="Semana anterior">‹</button><b>' + fechaTxt(d.lunes) + ' al ' + fechaTxt(sumar(d.lunes, 5)) +
+      '</b><button class="sec" data-sem="1" aria-label="Semana siguiente">›</button></div>' +
+      '<div class="sub" style="margin-top:6px">Se genera sola desde tu ruta base. Marca solo lo que cambia.</div></div>';
+    d.dias.forEach(function (x) {
+      h += '<div class="card"><div class="fila"><div><b>' + x.dia + ' ' + fechaTxt(x.fecha) + (x.fecha === d.hoy ? ' (hoy)' : '') + '</b>' +
+        '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' visitadas · ' + x.ped + ' con pedido</div></div>' +
+        '<button class="sec" data-irdia="' + x.fecha + '">Ver día</button></div>' +
+        '<div class="fila" style="margin-top:8px"><span class="pill ' + (x.exc ? 'wa' : 'ok') + '">' + (x.exc ? esc(x.exc) : 'Ruta normal') + '</span>' +
+        '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { return '<option value="' + t + '"' + (t === x.exc ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
+    });
+    $('main').innerHTML = h;
+  }).catch(falla);
+}
+
+/* ---------- Mi ruta (ruta base) ---------- */
+function cargaRB() {
+  call('ruta', { ruta: S.ruta }).then(function (d) { S.rb = d; S.cambios = {}; pintaRB(); }).catch(falla);
+}
+function pintaRB() {
+  var f = [['act', 'Activos'], ['sin', 'Sin día'], ['rea', 'Por reactivar']];
+  $('main').innerHTML = '<div class="card"><h1>Mi ruta base</h1>' + selRuta() +
+    '<div class="sub" id="cont" style="margin:6px 0 10px"></div>' +
+    '<div class="chips" style="margin-bottom:8px">' + f.map(function (x) { return '<button data-filtro="' + x[0] + '" aria-pressed="' + (S.filtro === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+    '<input type="search" id="buscar" placeholder="Buscar farmacia" value="' + esc(S.q) + '" aria-label="Buscar farmacia"></div>' +
+    '<div class="card" id="lista"></div><div class="guardar" id="zguardar"></div>';
+  contadorRB(); listaRB(); botonGuardar();
+}
+function contadorRB() {
+  var a = 0, c = 0; S.rb.clientes.forEach(function (x) { if (x[3]) { a++; if (x[4]) c++; } });
+  $('cont').textContent = c + ' de ' + a + ' clientes activos tienen día de visita. Elige el día y la frecuencia de cada uno.';
+}
+function listaRB() {
+  var q = S.q.toLowerCase(), h = '', n = 0;
+  S.rb.clientes.forEach(function (x, i) {
+    if (S.filtro === 'act' && !x[3]) return;
+    if (S.filtro === 'sin' && (!x[3] || x[4])) return;
+    if (S.filtro === 'rea' && x[3]) return;
+    if (q && x[1].toLowerCase().indexOf(q) < 0) return;
+    n++;
+    h += '<div class="rb"><div><b>' + esc(x[1]) + '</b><div class="sub num">' + esc(x[0]) + (x[2] ? ' · ' + esc(x[2]) : '') + (x[3] ? '' : ' <span class="in">Sin compra en 6 meses</span>') + '</div></div>' +
+      '<select data-rb="' + i + '" data-campo="dia" aria-label="Día de visita">' + DIASC.map(function (d, k) { return '<option value="' + k + '"' + (k === x[4] ? ' selected' : '') + '>' + d + '</option>'; }).join('') + '</select>' +
+      '<select data-rb="' + i + '" data-campo="frec" aria-label="Frecuencia">' + FREC.map(function (r) { return '<option value="' + r[0] + '"' + (r[0] === x[5] ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select></div>';
+  });
+  $('lista').innerHTML = h || '<div class="sub">No hay clientes en esta vista.</div>';
+}
+function botonGuardar() {
+  var n = Object.keys(S.cambios).length;
+  $('zguardar').innerHTML = n ? '<button class="pri" id="btnguardar" style="width:100%">Guardar ' + n + ' cambio' + (n > 1 ? 's' : '') + '</button>' : '';
+}
+function guardaRB() {
+  var items = S.rb.clientes.filter(function (x) { return S.cambios[x[0]]; }).map(function (x) { return { c: x[0], dia: x[4], frec: x[5] }; });
+  $('btnguardar').disabled = true; $('btnguardar').textContent = 'Guardando…';
+  call('asignar', { ruta: S.ruta, items: items }).then(function () { S.cambios = {}; botonGuardar(); contadorRB(); })
+    .catch(function (e) { falla(e); botonGuardar(); });
+}
+
+/* ---------- Equipo ---------- */
+function cargaEquipo() {
+  call('equipo', { fecha: S.fecha }).then(function (d) {
+    var t = { plan: 0, vis: 0, ped: 0, cob: 0 };
+    d.filas.forEach(function (f) { t.plan += f.plan; t.vis += f.vis; t.ped += f.ped; t.cob += f.cob; });
+    var h = '<div class="card"><h1>Equipo</h1>' + navFecha() +
+      '<div class="kpis num"><div><b>' + t.vis + ' / ' + t.plan + '</b><span>visitas</span></div><div><b>' + (t.plan ? Math.round(t.vis / t.plan * 100) : 0) + '%</b><span>cumplimiento</span></div>' +
+      '<div><b>' + (t.vis ? Math.round(t.ped / t.vis * 100) : 0) + '%</b><span>efectividad</span></div><div><b>' + t.cob + '</b><span>cobros</span></div></div></div>';
+    h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Visitas</th><th>Con pedido</th><th>Cobros</th><th>Estado</th></tr></thead><tbody>';
+    d.filas.forEach(function (f) {
+      var p = f.plan ? Math.round(f.vis / f.plan * 100) : 0, k, tx;
+      if (f.exc) { k = 'mu'; tx = f.exc; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
+      else if (!f.marc) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
+      h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div></td><td class="num">' + f.vis + ' / ' + f.plan + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+    if (d.puedeCubrir) {
+      h += '<div class="card"><h3>Asignar cobertura a un rotativo</h3><div class="sub" style="margin-bottom:8px">Para vacaciones o rutas vacantes. La persona verá esa ruta en su app durante esas fechas.</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px"><select id="cruta" aria-label="Ruta">' + d.filas.map(function (f) { return '<option value="' + esc(f.ruta) + '">' + esc(f.nombre) + '</option>'; }).join('') + '</select>' +
+        '<select id="cusr" aria-label="Rotativo">' + d.rotativos.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.nombre) + '</option>'; }).join('') + '</select>' +
+        '<div class="fila"><label class="sub">Desde <input type="date" id="cdesde" value="' + aISO(U.hoy) + '"></label><label class="sub">Hasta <input type="date" id="chasta" value="' + aISO(U.hoy) + '"></label></div>' +
+        '<button class="pri" id="btncob">Asignar cobertura</button></div>';
+      if (d.coberturas.length) h += '<div style="margin-top:10px">' + d.coberturas.map(function (c) { return '<div class="sub">Ruta ' + esc(c.ruta) + ': ' + esc(c.nombre) + ', del ' + fechaTxt(c.desde) + ' al ' + fechaTxt(c.hasta) + '</div>'; }).join('') + '</div>';
+      h += '</div>';
+    }
+    $('main').innerHTML = h;
+    $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
+  }).catch(falla);
+}
+function guardaCobertura() {
+  var n = function (id) { return Number($(id).value.replace(/-/g, '')); };
+  call('cobertura', { ruta: $('cruta').value, usuario: $('cusr').value, desde: n('cdesde'), hasta: n('chasta') }).then(cargaEquipo).catch(falla);
+}
+inicio();
+</script>
+</body>
+</html>
