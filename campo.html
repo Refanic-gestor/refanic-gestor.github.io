@@ -38,7 +38,17 @@ main.ancho{max-width:900px}
 .foco{font-size:12.5px;color:var(--mut)}
 .foco em{font-style:normal;background:var(--acs);color:var(--ac);font-weight:600;border-radius:6px;padding:1px 7px;margin:2px 0 0 4px;display:inline-block}
 .foco.nc em{background:var(--was);color:var(--wa)}
-.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.cli.cerrada{border-left-color:var(--mut)}
+.acts button[aria-pressed=true][data-est=cerrada]{background:var(--sf2);border-color:var(--mut);color:var(--ink)}
+.req{border-color:var(--bad)!important}
+.reqtxt{color:var(--bad);font-size:12px;font-weight:600}
+.slots{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.slot2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:6px}
+.rb{display:block!important}
+.act{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--ln)}
+.act:first-of-type{border-top:0}
+.x{border:0;background:none;color:var(--bad);font-weight:700;font-size:18px;padding:0 6px}
 .acts button{border:1px solid var(--ln);background:var(--sf2);border-radius:9px;padding:10px 4px;font-weight:600;font-size:13px}
 .acts button[aria-pressed=true][data-est=pedido]{background:var(--oks);border-color:var(--ok);color:var(--ok)}
 .acts button[aria-pressed=true][data-est=sin]{background:var(--was);border-color:var(--wa);color:var(--wa)}
@@ -82,10 +92,17 @@ try {
   K = (new URLSearchParams(location.search).get('k') || '').replace(/[^A-Za-z0-9]/g, '');
   if (K) localStorage.setItem('clave', K); else K = localStorage.getItem('clave') || '';
 } catch (e) {}
-var S = { tab: 'hoy', ruta: '', fecha: 0, dia: null, rb: null, cambios: {}, filtro: 'act', q: '' };
-var MOTIVOS = ['Venta', 'Retiro de producto', 'Atención especial'];
+var S = { tab: 'hoy', ruta: '', fecha: 0, dia: null, rb: null, cambios: {}, filtro: 'act', q: '', add: '', cart: null, qa: '' };
+var ESTS = [['pedido', 'Con pedido'], ['sin', 'Sin pedido'], ['cerrada', 'Cerrada'], ['no', 'No visitada']];
+var HECHAS = { pedido: 1, sin: 1, cerrada: 1 };
+var TIPOS = { cartera: 'Cliente de mi cartera', nuevo: 'Cliente nuevo', fuera: 'Cliente fuera de cartera', banco: 'Banco / depósito', otra: 'Otra actividad' };
 var EXC = ['', 'Feriado', 'Vacaciones', 'Cambio de zona', 'Otro'];
-var FREC = [['S', 'Semanal'], ['Q1', 'Quincenal A'], ['Q2', 'Quincenal B'], ['M1', 'Mensual sem. 1'], ['M2', 'Mensual sem. 2'], ['M3', 'Mensual sem. 3'], ['M4', 'Mensual sem. 4']];
+function semIso(n) { var d = aFecha(n); d.setDate(d.getDate() + 4 - (d.getDay() || 7)); var y0 = new Date(d.getFullYear(), 0, 1, 12); return Math.ceil(((d - y0) / 86400000 + 1) / 7); }
+function frecs() {
+  var impar = semIso(U.hoy) % 2 === 1;
+  return [['S', 'Semanal'], [impar ? 'Q1' : 'Q2', 'Quincenal: esta semana'], [impar ? 'Q2' : 'Q1', 'Quincenal: próx. semana'],
+    ['M1', 'Mensual: días 1 al 7'], ['M2', 'Mensual: días 8 al 14'], ['M3', 'Mensual: días 15 al 21'], ['M4', 'Mensual: días 22 al 28']];
+}
 var DIASC = ['Sin día', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 var $ = function (id) { return document.getElementById(id); };
@@ -156,7 +173,7 @@ function selRuta() {
   return '<select id="selruta" aria-label="Ruta">' + U.rutas.map(function (r) { return '<option value="' + esc(r.codigo) + '"' + (r.codigo === S.ruta ? ' selected' : '') + '>' + esc(r.nombre) + '</option>'; }).join('') + '</select>';
 }
 document.addEventListener('change', function (e) {
-  if (e.target.id === 'selruta') { S.ruta = e.target.value; S.cambios = {}; ir(S.tab); }
+  if (e.target.id === 'selruta') { S.ruta = e.target.value; S.cambios = {}; S.cart = null; ir(S.tab); }
 });
 function navFecha() {
   return '<div class="fila" style="margin-top:8px"><button class="sec" data-mov="-1" aria-label="Día anterior">‹</button>' +
@@ -165,49 +182,98 @@ function navFecha() {
 
 /* ---------- Mi dia ---------- */
 function cargaDia() {
+  S.add = ''; S.qa = '';
   call('dia', { ruta: S.ruta, fecha: S.fecha }).then(function (d) { S.dia = d; pintaDia(); }).catch(falla);
 }
 function resumen() {
-  var it = S.dia.items, r = { tot: it.length, marc: 0, vis: 0, ped: 0, cob: 0 };
-  it.forEach(function (x) { if (x.est) r.marc++; if (x.est === 'pedido' || x.est === 'sin') r.vis++; if (x.est === 'pedido') r.ped++; if (x.cob === 'si') r.cob++; });
+  var it = S.dia.items, r = { prog: 0, hechas: 0, marcP: 0, atend: 0, pts: 0, ped: 0, cob: 0, adic: 0 }, w = S.dia.pesoCobro || 0.5;
+  it.forEach(function (x) {
+    if (!x.extra) { r.prog++; if (x.est) r.marcP++; if (HECHAS[x.est]) r.hechas++; }
+    else if (HECHAS[x.est]) r.adic++;
+    if (x.est === 'pedido' || x.est === 'sin') { r.atend++; r.pts += x.est === 'pedido' ? 1 : (x.cob === 'si' ? w : 0); }
+    if (x.est === 'pedido') r.ped++;
+    if (x.cob === 'si') r.cob++;
+  });
   return r;
 }
 function chips(txt) { return txt.split('|').filter(Boolean).map(function (f) { return '<em>' + esc(f) + '</em>'; }).join(''); }
 function tarjeta(x, i) {
-  var ed = S.dia.editable ? '' : ' disabled';
+  var ed = S.dia.editable ? '' : ' disabled', sel = x.mot ? x.mot.split('|') : [];
   var h = '<div class="card cli ' + esc(x.est) + '" id="cli' + i + '"><div><b>' + esc(x.n) + '</b> <span class="sub num">' + esc(x.c) + '</span>' + (x.extra ? ' <span class="pill mu">Fuera de ruta</span>' : '') + '<span class="okg" id="okg' + i + '" aria-live="polite"></span></div>';
   if (x.pend) h += '<div class="foco">En foco, pendiente:' + chips(x.pend) + '</div>';
   if (x.nc) h += '<div class="foco nc">No compra:' + chips(x.nc) + '</div>';
-  h += '<div class="acts">' + [['pedido', 'Con pedido'], ['sin', 'Sin pedido'], ['no', 'No visitada']].map(function (e) {
+  h += '<div class="acts">' + ESTS.map(function (e) {
     return '<button data-i="' + i + '" data-est="' + e[0] + '" aria-pressed="' + (x.est === e[0]) + '"' + ed + '>' + e[1] + '</button>'; }).join('') + '</div>';
   h += '<div class="chips"><span>Cobro</span>' + [['si', 'Cobré'], ['no', 'No cobré'], ['na', 'Sin saldo']].map(function (e) {
     return '<button data-i="' + i + '" data-cob="' + e[0] + '" aria-pressed="' + (x.cob === e[0]) + '"' + ed + '>' + e[1] + '</button>'; }).join('') + '</div>';
-  if (x.est) {
-    h += '<div class="chips">' + MOTIVOS.map(function (m) { return '<button data-i="' + i + '" data-mot="' + esc(m) + '" aria-pressed="' + (x.mot === m) + '"' + ed + '>' + m + '</button>'; }).join('') + '</div>';
-    h += '<input type="text" id="obs' + i + '" data-obs="' + i + '" maxlength="300" placeholder="' + (x.est === 'no' ? '¿Por qué no se visitó? (opcional)' : 'Observación (opcional)') + '" value="' + esc(x.obs) + '" aria-label="Observación"' + ed + '>';
+  if (x.est && x.est !== 'no' && x.est !== 'cerrada') {
+    h += '<div class="chips"><span>¿Qué hiciste?</span>' + (U.que || []).map(function (m) { return '<button data-i="' + i + '" data-que="' + esc(m) + '" aria-pressed="' + (sel.indexOf(m) >= 0) + '"' + ed + '>' + esc(m) + '</button>'; }).join('') + '</div>';
   }
+  var req = x.est === 'cerrada' && !String(x.obs || '').trim();
+  h += '<input type="text" id="obs' + i + '" data-obs="' + i + '" maxlength="300" class="' + (req ? 'req' : '') + '" placeholder="' + (x.est === 'cerrada' ? 'Obligatorio: ¿por qué estaba cerrada?' : x.est === 'no' ? '¿Por qué no se visitó? (opcional)' : 'Observación (opcional)') + '" value="' + esc(x.obs) + '" aria-label="Observación"' + ed + '>';
+  if (req) h += '<div class="reqtxt" id="req' + i + '">Escribe por qué estaba cerrada.</div>';
   return h + '</div>';
 }
+function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
 function cabeceraDia() {
-  var r = resumen(), p = r.tot ? r.marc / r.tot * 100 : 0;
-  $('pbar').style.width = p + '%';
-  $('kmarc').textContent = r.marc + ' / ' + r.tot; $('kped').textContent = r.ped; $('kcob').textContent = r.cob;
-  $('kefe').textContent = (r.vis ? Math.round(r.ped / r.vis * 100) : 0) + '%';
-  $('fin').innerHTML = r.tot && r.marc === r.tot ? '<div class="msg ok">Día completo: ' + r.vis + ' de ' + r.tot + ' visitas, ' + r.ped + ' con pedido y ' + r.cob + ' cobros.</div>' : '';
+  var r = resumen();
+  $('pbar').style.width = pct(r.hechas, r.prog) + '%';
+  $('kcum').textContent = r.hechas + ' / ' + r.prog; $('kefe').textContent = pct(r.pts, r.atend) + '%';
+  $('kped').textContent = r.ped; $('kcob').textContent = r.cob;
+  $('fin').innerHTML = r.prog && r.marcP === r.prog ? '<div class="msg ok">Ruta completa: ' + r.hechas + ' de ' + r.prog + ' visitas hechas, ' + r.ped + ' con pedido y ' + r.cob + ' cobros' + (r.adic ? ', más ' + r.adic + ' fuera de ruta' : '') + '.</div>' : '';
+}
+function pintaActs() {
+  var d = S.dia, h = '';
+  if (d.acts.length) {
+    h += '<div class="slot">Actividades (' + d.acts.length + ')</div><div class="card">' + d.acts.map(function (a) {
+      return '<div class="act"><div><b>' + esc(TIPOS[a.tipo] || a.tipo) + (a.nombre ? ': ' + esc(a.nombre) : '') + '</b>' + (a.mun ? ' <span class="sub">' + esc(a.mun) + '</span>' : '') +
+        '<div class="sub">' + esc(a.det) + '</div></div>' + (d.editable ? '<button class="x" data-delact="' + esc(a.id) + '" aria-label="Borrar actividad">×</button>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  if (d.editable) h += pintaAgregar();
+  $('zacts').innerHTML = h;
+}
+function pintaAgregar() {
+  if (!S.add) return '<button class="sec" data-add="1" style="padding:12px;width:100%">+ Agregar visita o actividad</button>';
+  var h = '<div class="card"><div class="fila"><h3 style="margin:0">Agregar</h3><button class="x" data-add="0" aria-label="Cerrar">×</button></div>' +
+    '<div class="chips" style="margin:8px 0">' + Object.keys(TIPOS).map(function (k) { return '<button data-tipo="' + k + '" aria-pressed="' + (S.add === k) + '">' + TIPOS[k] + '</button>'; }).join('') + '</div>';
+  if (S.add === 'cartera') {
+    h += '<div class="sub" style="margin-bottom:6px">Busca un cliente de tu ruta que no estaba programado hoy. Cuenta en tu efectividad.</div>' +
+      '<input type="search" id="qa" placeholder="Nombre o código" value="' + esc(S.qa) + '" aria-label="Buscar cliente"><div id="resa" style="margin-top:6px"></div>';
+  } else if (S.add !== '1') {
+    if (S.add === 'nuevo' || S.add === 'fuera') h += '<input type="text" id="an" maxlength="120" placeholder="Nombre del cliente" aria-label="Nombre del cliente" style="margin-bottom:6px">';
+    if (S.add === 'nuevo') h += '<input type="text" id="am" maxlength="60" placeholder="Municipio (opcional)" aria-label="Municipio" style="margin-bottom:6px">';
+    h += '<input type="text" id="ad" maxlength="300" placeholder="' + (S.add === 'banco' ? 'Detalle (ej. depósito de cobros)' : '¿Qué se hizo?') + '" aria-label="Detalle">' +
+      '<div class="sub" style="margin:6px 0">Queda registrada como actividad; no cuenta en tu efectividad.</div><button class="pri" id="btnact" style="width:100%">Guardar actividad</button>';
+  } else h += '<div class="sub">Elige qué quieres agregar.</div>';
+  return h + '</div>';
+}
+function listaAgregar() {
+  var z = $('resa'); if (!z) return;
+  var q = S.qa.trim().toLowerCase();
+  if (!S.cart) { z.innerHTML = '<div class="sub">Cargando clientes…</div>'; return; }
+  if (q.length < 2) { z.innerHTML = '<div class="sub">Escribe al menos dos letras.</div>'; return; }
+  var ya = {}; S.dia.items.forEach(function (x) { ya[x.c] = 1; });
+  var h = '', n = 0;
+  S.cart.forEach(function (c) {
+    if (n >= 15 || ya[c[0]] || (c[1].toLowerCase().indexOf(q) < 0 && c[0].indexOf(q) < 0)) return;
+    n++; h += '<div class="act"><div><b>' + esc(c[1]) + '</b><div class="sub num">' + esc(c[0]) + (c[2] ? ' · ' + esc(c[2]) : '') + '</div></div><button class="sec" data-addcli="' + esc(c[0]) + '">Agregar</button></div>';
+  });
+  z.innerHTML = h || '<div class="sub">No hay más clientes con ese nombre en tu ruta.</div>';
 }
 function pintaDia() {
   var d = S.dia, h = '<div class="card"><div class="fila"><h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1></div>' + selRuta() + navFecha() +
-    '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kmarc"></b><span>marcadas</span></div><div><b id="kped"></b><span>con pedido</span></div>' +
-    '<div><b id="kefe"></b><span>efectividad</span></div><div><b id="kcob"></b><span>cobros</span></div></div></div>';
+    '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kcum"></b><span>visitas hechas</span></div><div><b id="kefe"></b><span>efectividad</span></div>' +
+    '<div><b id="kped"></b><span>con pedido</span></div><div><b id="kcob"></b><span>cobros</span></div></div></div>';
   if (d.exc) h += '<div class="msg">Día marcado como: ' + esc(d.exc) + '</div>';
   if (!d.editable) h += '<div class="msg">Este día es solo de consulta.</div>';
   if (!d.items.length) h += '<div class="card">No hay farmacias programadas para este día. Asigna tus clientes en <b>Mi ruta</b>.</div>';
   var mun = null;
   d.items.forEach(function (x, i) { if (x.m !== mun) { mun = x.m; h += '<div class="slot">' + esc(mun || 'Sin municipio') + '</div>'; } h += tarjeta(x, i); });
-  h += '<div id="fin"></div>';
+  h += '<div id="fin"></div><div id="zacts" style="display:flex;flex-direction:column;gap:10px"></div>';
   $('main').innerHTML = h;
   $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
-  cabeceraDia();
+  cabeceraDia(); pintaActs();
 }
 function guardaVisita(i) {
   var x = S.dia.items[i];
@@ -232,28 +298,66 @@ $('main').addEventListener('click', function (e) {
   if (b.dataset.filtro) { S.filtro = b.dataset.filtro; pintaRB(); return; }
   if (b.id === 'btnguardar') { guardaRB(); return; }
   if (b.id === 'btncob') { guardaCobertura(); return; }
-  if (S.tab !== 'hoy' || b.dataset.i === undefined) return;
+  if (b.dataset.addslot !== undefined) { var cc = S.rb.clientes[Number(b.dataset.addslot)]; cc[4].push([0, 'S']); S.cambios[cc[0]] = 1; listaRB(); botonGuardar(); return; }
+  if (S.tab !== 'hoy') return;
+  if (b.dataset.add !== undefined) { S.add = b.dataset.add === '0' ? '' : '1'; pintaActs(); return; }
+  if (b.dataset.tipo) {
+    S.add = b.dataset.tipo; pintaActs();
+    if (S.add === 'cartera') {
+      if (!S.cart) call('ruta', { ruta: S.ruta }).then(function (d) { S.cart = d.clientes; listaAgregar(); }).catch(falla);
+      listaAgregar(); $('qa').focus();
+    }
+    return;
+  }
+  if (b.dataset.addcli) {
+    var c = S.cart.filter(function (z) { return z[0] === b.dataset.addcli; })[0]; if (!c) return;
+    S.dia.items.push({ c: c[0], n: c[1], m: c[2], pend: '', nc: '', est: '', mot: '', obs: '', cob: '', extra: 1 });
+    S.add = ''; S.qa = ''; pintaDia();
+    var el = $('cli' + (S.dia.items.length - 1)); if (el) el.scrollIntoView({ block: 'center' });
+    return;
+  }
+  if (b.id === 'btnact') { guardaActividad(b); return; }
+  if (b.dataset.delact) {
+    var id = b.dataset.delact; b.disabled = true;
+    call('borraActividad', { ruta: S.ruta, fecha: S.dia.fecha, id: id }).then(function () {
+      S.dia.acts = S.dia.acts.filter(function (a) { return a.id !== id; }); pintaActs();
+    }).catch(function (e) { b.disabled = false; falla(e); });
+    return;
+  }
+  if (b.dataset.i === undefined) return;
   var i = Number(b.dataset.i), x = S.dia.items[i];
-  if (b.dataset.est) { x.est = x.est === b.dataset.est ? '' : b.dataset.est; if (!x.est) x.mot = ''; }
+  if (b.dataset.est) { x.est = x.est === b.dataset.est ? '' : b.dataset.est; if (!x.est || x.est === 'no' || x.est === 'cerrada') x.mot = ''; }
   else if (b.dataset.cob) x.cob = x.cob === b.dataset.cob ? '' : b.dataset.cob;
-  else if (b.dataset.mot) x.mot = x.mot === b.dataset.mot ? '' : b.dataset.mot;
+  else if (b.dataset.que) { var ls = x.mot ? x.mot.split('|') : [], k = ls.indexOf(b.dataset.que); if (k >= 0) ls.splice(k, 1); else ls.push(b.dataset.que); x.mot = ls.join('|'); }
   else return;
   $('cli' + i).outerHTML = tarjeta(x, i);
   cabeceraDia(); guardaVisita(i);
 });
 $('main').addEventListener('change', function (e) {
   var t = e.target;
-  if (t.dataset.obs !== undefined) { var i = Number(t.dataset.obs); S.dia.items[i].obs = t.value; guardaVisita(i); return; }
+  if (t.dataset.obs !== undefined) { var i = Number(t.dataset.obs); S.dia.items[i].obs = t.value; guardaVisita(i); if (S.dia.items[i].est === 'cerrada') $('cli' + i).outerHTML = tarjeta(S.dia.items[i], i); return; }
   if (t.dataset.exc) {
     call('excepcion', { ruta: S.ruta, fecha: Number(t.dataset.exc), tipo: t.value }).then(cargaSemana).catch(falla); return;
   }
   if (t.dataset.rb) {
-    var c = S.rb.clientes[Number(t.dataset.rb)];
-    if (t.dataset.campo === 'dia') c[4] = Number(t.value); else c[5] = t.value;
+    var c = S.rb.clientes[Number(t.dataset.rb)], sl = c[4][Number(t.dataset.k)];
+    if (t.dataset.campo === 'dia') sl[0] = Number(t.value); else sl[1] = t.value;
     S.cambios[c[0]] = 1; botonGuardar(); contadorRB();
   }
 });
-$('main').addEventListener('input', function (e) { if (e.target.id === 'buscar') { S.q = e.target.value; listaRB(); } });
+$('main').addEventListener('input', function (e) {
+  if (e.target.id === 'buscar') { S.q = e.target.value; listaRB(); }
+  else if (e.target.id === 'qa') { S.qa = e.target.value; listaAgregar(); }
+});
+function guardaActividad(b) {
+  var g = function (id) { var e = $(id); return e ? e.value.trim() : ''; };
+  var p = { ruta: S.ruta, fecha: S.dia.fecha, tipo: S.add, nombre: g('an'), mun: g('am'), det: g('ad') };
+  if ((p.tipo === 'nuevo' || p.tipo === 'fuera') && !p.nombre) { toast('Escribe el nombre del cliente.'); return; }
+  if (!p.det) { toast('Escribe qué se hizo.'); return; }
+  b.disabled = true; b.textContent = 'Guardando…';
+  call('actividad', p).then(function (a) { S.dia.acts.push(a); S.add = ''; pintaActs(); })
+    .catch(function (e) { b.disabled = false; b.textContent = 'Guardar actividad'; falla(e); });
+}
 
 /* ---------- Mi semana ---------- */
 function cargaSemana() {
@@ -264,7 +368,7 @@ function cargaSemana() {
       '<div class="sub" style="margin-top:6px">Se genera sola desde tu ruta base. Marca solo lo que cambia.</div></div>';
     d.dias.forEach(function (x) {
       h += '<div class="card"><div class="fila"><div><b>' + x.dia + ' ' + fechaTxt(x.fecha) + (x.fecha === d.hoy ? ' (hoy)' : '') + '</b>' +
-        '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' visitadas · ' + x.ped + ' con pedido</div></div>' +
+        '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' hechas · ' + x.ped + ' con pedido</div></div>' +
         '<button class="sec" data-irdia="' + x.fecha + '">Ver día</button></div>' +
         '<div class="fila" style="margin-top:8px"><span class="pill ' + (x.exc ? 'wa' : 'ok') + '">' + (x.exc ? esc(x.exc) : 'Ruta normal') + '</span>' +
         '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { return '<option value="' + t + '"' + (t === x.exc ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
@@ -287,20 +391,25 @@ function pintaRB() {
   contadorRB(); listaRB(); botonGuardar();
 }
 function contadorRB() {
-  var a = 0, c = 0; S.rb.clientes.forEach(function (x) { if (x[3]) { a++; if (x[4]) c++; } });
-  $('cont').textContent = c + ' de ' + a + ' clientes activos tienen día de visita. Elige el día y la frecuencia de cada uno.';
+  var a = 0, c = 0; S.rb.clientes.forEach(function (x) { if (x[3]) { a++; if (x[4].some(function (s) { return s[0]; })) c++; } });
+  $('cont').textContent = c + ' de ' + a + ' clientes activos tienen día de visita. Puedes darle hasta ' + (U.maxDias || 3) + ' días a un cliente.';
 }
 function listaRB() {
-  var q = S.q.toLowerCase(), h = '', n = 0;
+  var q = S.q.toLowerCase(), h = '', F = frecs(), max = U.maxDias || 3;
   S.rb.clientes.forEach(function (x, i) {
+    var tiene = x[4].some(function (s) { return s[0]; });
     if (S.filtro === 'act' && !x[3]) return;
-    if (S.filtro === 'sin' && (!x[3] || x[4])) return;
+    if (S.filtro === 'sin' && (!x[3] || tiene)) return;
     if (S.filtro === 'rea' && x[3]) return;
     if (q && x[1].toLowerCase().indexOf(q) < 0) return;
-    n++;
-    h += '<div class="rb"><div><b>' + esc(x[1]) + '</b><div class="sub num">' + esc(x[0]) + (x[2] ? ' · ' + esc(x[2]) : '') + (x[3] ? '' : ' <span class="in">Sin compra en 6 meses</span>') + '</div></div>' +
-      '<select data-rb="' + i + '" data-campo="dia" aria-label="Día de visita">' + DIASC.map(function (d, k) { return '<option value="' + k + '"' + (k === x[4] ? ' selected' : '') + '>' + d + '</option>'; }).join('') + '</select>' +
-      '<select data-rb="' + i + '" data-campo="frec" aria-label="Frecuencia">' + FREC.map(function (r) { return '<option value="' + r[0] + '"' + (r[0] === x[5] ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select></div>';
+    if (!x[4].length) x[4].push([0, 'S']);
+    h += '<div class="rb"><div><b>' + esc(x[1]) + '</b><div class="sub num">' + esc(x[0]) + (x[2] ? ' · ' + esc(x[2]) : '') + (x[3] ? '' : ' <span class="in">Sin compra en 6 meses</span>') + '</div></div><div class="slots">';
+    x[4].forEach(function (s, k) {
+      h += '<div class="slot2"><select data-rb="' + i + '" data-k="' + k + '" data-campo="dia" aria-label="Día de visita">' + DIASC.map(function (d, j) { return '<option value="' + j + '"' + (j === s[0] ? ' selected' : '') + '>' + d + '</option>'; }).join('') + '</select>' +
+        '<select data-rb="' + i + '" data-k="' + k + '" data-campo="frec" aria-label="Frecuencia">' + F.map(function (r) { return '<option value="' + r[0] + '"' + (r[0] === s[1] ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select></div>';
+    });
+    if (tiene && x[4].length < max) h += '<button class="sec" data-addslot="' + i + '" style="align-self:flex-start;font-size:12.5px;padding:5px 10px">+ otro día</button>';
+    h += '</div></div>';
   });
   $('lista').innerHTML = h || '<div class="sub">No hay clientes en esta vista.</div>';
 }
@@ -309,26 +418,32 @@ function botonGuardar() {
   $('zguardar').innerHTML = n ? '<button class="pri" id="btnguardar" style="width:100%">Guardar ' + n + ' cambio' + (n > 1 ? 's' : '') + '</button>' : '';
 }
 function guardaRB() {
-  var items = S.rb.clientes.filter(function (x) { return S.cambios[x[0]]; }).map(function (x) { return { c: x[0], dia: x[4], frec: x[5] }; });
+  var items = S.rb.clientes.filter(function (x) { return S.cambios[x[0]]; }).map(function (x) {
+    return { c: x[0], dias: x[4].filter(function (s) { return s[0]; }).map(function (s) { return { dia: s[0], frec: s[1] }; }) };
+  });
   $('btnguardar').disabled = true; $('btnguardar').textContent = 'Guardando…';
-  call('asignar', { ruta: S.ruta, items: items }).then(function () { S.cambios = {}; botonGuardar(); contadorRB(); })
+  call('asignar', { ruta: S.ruta, items: items }).then(function () { S.cambios = {}; botonGuardar(); contadorRB(); listaRB(); })
     .catch(function (e) { falla(e); botonGuardar(); });
 }
 
 /* ---------- Equipo ---------- */
 function cargaEquipo() {
   call('equipo', { fecha: S.fecha }).then(function (d) {
-    var t = { plan: 0, vis: 0, ped: 0, cob: 0 };
-    d.filas.forEach(function (f) { t.plan += f.plan; t.vis += f.vis; t.ped += f.ped; t.cob += f.cob; });
+    var t = { plan: 0, hechas: 0, atend: 0, pts: 0, ped: 0, cob: 0, cerr: 0, adic: 0, act: 0 };
+    d.filas.forEach(function (f) { Object.keys(t).forEach(function (k) { t[k] += f[k]; }); });
     var h = '<div class="card"><h1>Equipo</h1>' + navFecha() +
-      '<div class="kpis num"><div><b>' + t.vis + ' / ' + t.plan + '</b><span>visitas</span></div><div><b>' + (t.plan ? Math.round(t.vis / t.plan * 100) : 0) + '%</b><span>cumplimiento</span></div>' +
-      '<div><b>' + (t.vis ? Math.round(t.ped / t.vis * 100) : 0) + '%</b><span>efectividad</span></div><div><b>' + t.cob + '</b><span>cobros</span></div></div></div>';
-    h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Visitas</th><th>Con pedido</th><th>Cobros</th><th>Estado</th></tr></thead><tbody>';
+      '<div class="kpis num"><div><b>' + pct(t.hechas, t.plan) + '%</b><span>cumplimiento (' + t.hechas + ' / ' + t.plan + ')</span></div><div><b>' + pct(t.pts, t.atend) + '%</b><span>efectividad</span></div>' +
+      '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.cob + '</b><span>cobros</span></div><div><b>' + t.adic + '</b><span>fuera de ruta</span></div><div><b>' + t.act + '</b><span>actividades</span></div></div>' +
+      '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas.</div></div>';
+    h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Cumplimiento</th><th>Efectividad</th><th>Pedidos</th><th>Cobros</th><th>Cerradas</th><th>Fuera de ruta</th><th>Actividades</th><th>Estado</th></tr></thead><tbody>';
     d.filas.forEach(function (f) {
-      var p = f.plan ? Math.round(f.vis / f.plan * 100) : 0, k, tx;
+      var p = pct(f.hechas, f.plan), k, tx;
       if (f.exc) { k = 'mu'; tx = f.exc; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
-      else if (!f.marc) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
-      h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div></td><td class="num">' + f.vis + ' / ' + f.plan + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
+      else if (!f.marc && !f.act) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
+      h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div></td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
+        '<td class="num">' + (f.atend ? pct(f.pts, f.atend) + '%' : '–') + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td>' +
+        '<td class="num">' + f.cerr + (f.repet ? ' <span class="pill wa" title="Clientes cerrados también en su visita anterior">' + f.repet + ' repetida' + (f.repet > 1 ? 's' : '') + '</span>' : '') + '</td>' +
+        '<td class="num">' + f.adic + '</td><td class="num">' + f.act + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
     });
     h += '</tbody></table></div></div>';
     if (d.puedeCubrir) {
