@@ -72,6 +72,9 @@ nav button[aria-current=page]{background:var(--acs);color:var(--ac)}
 .rb{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--ln)}
 .rb:first-child{border-top:0}.rb select{padding:6px 4px;font-size:13px}
 .rb .in{color:var(--wa);font-size:12px;font-weight:600}
+.just{border-left:4px solid var(--wa)}.just.okj{border-left-color:var(--ok)}
+.cnt{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.cnt span{font-size:12.5px;padding:3px 8px;border-radius:99px;background:var(--oks);color:var(--ok);font-weight:600}.cnt span.c{background:var(--bads);color:var(--bad)}
+.jtx{font-size:12px;margin-top:3px;color:var(--wa)}.jtx.bad{color:var(--bad);font-weight:600}
 .guardar{position:sticky;bottom:70px;z-index:2}
 .tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
 th{text-align:left;color:var(--mut);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--ln)}
@@ -182,7 +185,7 @@ function navFecha() {
 
 /* ---------- Mi dia ---------- */
 function cargaDia() {
-  S.add = ''; S.qa = '';
+  S.add = ''; S.qa = ''; S.editJust = false; S.jmot = ''; S.jdet = null;
   call('dia', { ruta: S.ruta, fecha: S.fecha }).then(function (d) { S.dia = d; pintaDia(); }).catch(falla);
 }
 function resumen() {
@@ -266,6 +269,7 @@ function pintaDia() {
     '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kcum"></b><span>visitas hechas</span></div><div><b id="kefe"></b><span>efectividad</span></div>' +
     '<div><b id="kped"></b><span>con pedido</span></div><div><b id="kcob"></b><span>cobros</span></div></div></div>';
   if (d.exc) h += '<div class="msg">Día marcado como: ' + esc(d.exc) + '</div>';
+  h += '<div id="zjust"></div>';
   if (!d.editable) h += '<div class="msg">Este día es solo de consulta.</div>';
   if (!d.items.length) h += '<div class="card">No hay farmacias programadas para este día. Asigna tus clientes en <b>Mi ruta</b>.</div>';
   var mun = null;
@@ -273,7 +277,35 @@ function pintaDia() {
   h += '<div id="fin"></div><div id="zacts" style="display:flex;flex-direction:column;gap:10px"></div>';
   $('main').innerHTML = h;
   $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
-  cabeceraDia(); pintaActs();
+  cabeceraDia(); pintaActs(); pintaJust();
+}
+function pintaJust() {
+  var d = S.dia, z = $('zjust'); if (!z) return;
+  if (!d.corto) { z.innerHTML = ''; return; }
+  var min = d.minVis || 10, j = d.just, h;
+  if (j && !S.editJust) {
+    h = '<div class="card just okj"><b>Plan corto justificado</b> <span class="sub">(' + d.plan + ' de ' + min + ' visitas programadas)</span>' +
+      '<div class="sub" style="margin-top:4px"><b>' + esc(j.mot) + ':</b> ' + esc(j.det) + '</div>' +
+      (d.editable ? '<button class="sec" data-editjust="1" style="margin-top:8px;font-size:12.5px;padding:5px 10px">Cambiar</button>' : '') + '</div>';
+  } else if (!d.editable) {
+    h = '<div class="card just"><b>Plan corto sin justificar</b> <span class="sub">(' + d.plan + ' de ' + min + ' visitas programadas)</span></div>';
+  } else {
+    var sel = S.jmot || (j ? j.mot : '');
+    h = '<div class="card just"><b>Tu plan de hoy tiene ' + d.plan + ' visita' + (d.plan === 1 ? '' : 's') + ' programada' + (d.plan === 1 ? '' : 's') + '; el mínimo es ' + min + '.</b>' +
+      '<div class="sub" style="margin:4px 0 8px">Explica por qué. Para la próxima, completa tu ruta en <b>Mi ruta</b>.</div>' +
+      '<div class="chips">' + (U.motivosCorto || []).map(function (m) { return '<button data-jmot="' + esc(m) + '" aria-pressed="' + (m === sel) + '">' + esc(m) + '</button>'; }).join('') + '</div>' +
+      '<input type="text" id="jdet" maxlength="200" placeholder="Detalle (obligatorio)" aria-label="Detalle de la justificación" value="' + esc(S.jdet != null ? S.jdet : (j ? j.det : '')) + '" style="margin-top:8px">' +
+      '<button class="pri" id="btnjust" style="width:100%;margin-top:8px">Guardar justificación</button></div>';
+  }
+  z.innerHTML = h;
+}
+function guardaJust(b) {
+  var p = { ruta: S.ruta, fecha: S.dia.fecha, plan: S.dia.plan, mot: S.jmot || (S.dia.just ? S.dia.just.mot : ''), det: ($('jdet').value || '').trim() };
+  if (!p.mot) { toast('Elige el motivo.'); return; }
+  if (!p.det) { toast('Escribe el detalle.'); return; }
+  b.disabled = true; b.textContent = 'Guardando…';
+  call('justifica', p).then(function (j) { S.dia.just = j; S.editJust = false; S.jmot = ''; S.jdet = null; pintaJust(); })
+    .catch(function (e) { b.disabled = false; b.textContent = 'Guardar justificación'; falla(e); });
 }
 function guardaVisita(i) {
   var x = S.dia.items[i];
@@ -317,6 +349,9 @@ $('main').addEventListener('click', function (e) {
     return;
   }
   if (b.id === 'btnact') { guardaActividad(b); return; }
+  if (b.id === 'btnjust') { guardaJust(b); return; }
+  if (b.dataset.jmot) { S.jdet = $('jdet') ? $('jdet').value : null; S.jmot = b.dataset.jmot; pintaJust(); return; }
+  if (b.dataset.editjust) { S.editJust = true; pintaJust(); return; }
   if (b.dataset.delact) {
     var id = b.dataset.delact; b.disabled = true;
     call('borraActividad', { ruta: S.ruta, fecha: S.dia.fecha, id: id }).then(function () {
@@ -368,7 +403,8 @@ function cargaSemana() {
       '<div class="sub" style="margin-top:6px">Se genera sola desde tu ruta base. Marca solo lo que cambia.</div></div>';
     d.dias.forEach(function (x) {
       h += '<div class="card"><div class="fila"><div><b>' + x.dia + ' ' + fechaTxt(x.fecha) + (x.fecha === d.hoy ? ' (hoy)' : '') + '</b>' +
-        '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' hechas · ' + x.ped + ' con pedido</div></div>' +
+        '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' hechas · ' + x.ped + ' con pedido</div>' +
+        (x.corto ? '<div class="jtx ' + (x.just ? '' : 'bad') + '">Plan corto (mínimo ' + d.minVis + ')' + (x.just ? ', justificado' : ', sin justificar') + '</div>' : '') + '</div>' +
         '<button class="sec" data-irdia="' + x.fecha + '">Ver día</button></div>' +
         '<div class="fila" style="margin-top:8px"><span class="pill ' + (x.exc ? 'wa' : 'ok') + '">' + (x.exc ? esc(x.exc) : 'Ruta normal') + '</span>' +
         '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { return '<option value="' + t + '"' + (t === x.exc ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
@@ -392,7 +428,26 @@ function pintaRB() {
 }
 function contadorRB() {
   var a = 0, c = 0; S.rb.clientes.forEach(function (x) { if (x[3]) { a++; if (x[4].some(function (s) { return s[0]; })) c++; } });
-  $('cont').textContent = c + ' de ' + a + ' clientes activos tienen día de visita. Puedes darle hasta ' + (U.maxDias || 3) + ' días a un cliente.';
+  $('cont').innerHTML = esc(c + ' de ' + a + ' clientes activos tienen día de visita. Puedes darle hasta ' + (U.maxDias || 3) + ' días a un cliente.') + conteoSemanas();
+}
+function tocaF(frec, n) {
+  if (frec === 'Q1') return semIso(n) % 2 === 1;
+  if (frec === 'Q2') return semIso(n) % 2 === 0;
+  if (frec && frec.charAt(0) === 'M') return Math.ceil((n % 100) / 7) === Number(frec.charAt(1));
+  return true;
+}
+function conteoSemanas() {
+  var min = U.minVis || 10, lunes = sumar(U.hoy, 1 - (aFecha(U.hoy).getDay() || 7)), h = '';
+  [['Esta semana', 0], ['Próxima semana', 7]].forEach(function (w) {
+    h += '<div style="margin-top:8px"><b>' + w[0] + '</b> <span class="sub">(mínimo ' + min + ' por día, lunes a viernes)</span><div class="cnt num">';
+    for (var i = 0; i < 5; i++) {
+      var f = sumar(lunes, w[1] + i), n = 0;
+      S.rb.clientes.forEach(function (x) { if (x[4].some(function (sl) { return sl[0] === i + 1 && tocaF(sl[1], f); })) n++; });
+      h += '<span class="' + (n < min ? 'c' : '') + '">' + DIASC[i + 1].slice(0, 3) + ' ' + aFecha(f).getDate() + ': ' + n + '</span>';
+    }
+    h += '</div></div>';
+  });
+  return h;
 }
 function listaRB() {
   var q = S.q.toLowerCase(), h = '', F = frecs(), max = U.maxDias || 3;
@@ -434,13 +489,14 @@ function cargaEquipo() {
     var h = '<div class="card"><h1>Equipo</h1>' + navFecha() +
       '<div class="kpis num"><div><b>' + pct(t.hechas, t.plan) + '%</b><span>cumplimiento (' + t.hechas + ' / ' + t.plan + ')</span></div><div><b>' + pct(t.pts, t.atend) + '%</b><span>efectividad</span></div>' +
       '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.cob + '</b><span>cobros</span></div><div><b>' + t.adic + '</b><span>fuera de ruta</span></div><div><b>' + t.act + '</b><span>actividades</span></div></div>' +
-      '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas.</div></div>';
+      '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas. Plan corto: menos de ' + d.minVis + ' visitas programadas de lunes a viernes.</div></div>';
     h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Cumplimiento</th><th>Efectividad</th><th>Pedidos</th><th>Cobros</th><th>Cerradas</th><th>Fuera de ruta</th><th>Actividades</th><th>Estado</th></tr></thead><tbody>';
     d.filas.forEach(function (f) {
       var p = pct(f.hechas, f.plan), k, tx;
       if (f.exc) { k = 'mu'; tx = f.exc; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
       else if (!f.marc && !f.act) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
-      h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div></td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
+      h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div>' +
+        (f.corto ? '<div class="jtx ' + (f.just ? '' : 'bad') + '">Plan corto (' + f.plan + ')' + (f.just ? ': ' + esc(f.just) : ', sin justificar') + '</div>' : '') + '</td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
         '<td class="num">' + (f.atend ? pct(f.pts, f.atend) + '%' : '–') + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td>' +
         '<td class="num">' + f.cerr + (f.repet ? ' <span class="pill wa" title="Clientes cerrados también en su visita anterior">' + f.repet + ' repetida' + (f.repet > 1 ? 's' : '') + '</span>' : '') + '</td>' +
         '<td class="num">' + f.adic + '</td><td class="num">' + f.act + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
