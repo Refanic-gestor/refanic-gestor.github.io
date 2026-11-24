@@ -282,16 +282,16 @@ function pintaDia() {
 function pintaJust() {
   var d = S.dia, z = $('zjust'); if (!z) return;
   if (!d.corto) { z.innerHTML = ''; return; }
-  var min = d.minVis || 10, j = d.just, h;
+  var j = d.just, n = d.plan + ' visita' + (d.plan === 1 ? '' : 's') + ' programada' + (d.plan === 1 ? '' : 's'), h;
   if (j && !S.editJust) {
-    h = '<div class="card just okj"><b>Plan corto justificado</b> <span class="sub">(' + d.plan + ' de ' + min + ' visitas programadas)</span>' +
+    h = '<div class="card just okj"><b>Plan corto justificado</b> <span class="sub">(' + n + ')</span>' +
       '<div class="sub" style="margin-top:4px"><b>' + esc(j.mot) + ':</b> ' + esc(j.det) + '</div>' +
       (d.editable ? '<button class="sec" data-editjust="1" style="margin-top:8px;font-size:12.5px;padding:5px 10px">Cambiar</button>' : '') + '</div>';
   } else if (!d.editable) {
-    h = '<div class="card just"><b>Plan corto sin justificar</b> <span class="sub">(' + d.plan + ' de ' + min + ' visitas programadas)</span></div>';
+    h = '<div class="card just"><b>Plan corto sin justificar</b> <span class="sub">(' + n + ')</span></div>';
   } else {
     var sel = S.jmot || (j ? j.mot : '');
-    h = '<div class="card just"><b>Tu plan de hoy tiene ' + d.plan + ' visita' + (d.plan === 1 ? '' : 's') + ' programada' + (d.plan === 1 ? '' : 's') + '; el mínimo es ' + min + '.</b>' +
+    h = '<div class="card just"><b>Tu plan de hoy está por debajo de lo normal para tu ruta (' + n + ').</b>' +
       '<div class="sub" style="margin:4px 0 8px">Explica por qué. Para la próxima, completa tu ruta en <b>Mi ruta</b>.</div>' +
       '<div class="chips">' + (U.motivosCorto || []).map(function (m) { return '<button data-jmot="' + esc(m) + '" aria-pressed="' + (m === sel) + '">' + esc(m) + '</button>'; }).join('') + '</div>' +
       '<input type="text" id="jdet" maxlength="200" placeholder="Detalle (obligatorio)" aria-label="Detalle de la justificación" value="' + esc(S.jdet != null ? S.jdet : (j ? j.det : '')) + '" style="margin-top:8px">' +
@@ -404,7 +404,7 @@ function cargaSemana() {
     d.dias.forEach(function (x) {
       h += '<div class="card"><div class="fila"><div><b>' + x.dia + ' ' + fechaTxt(x.fecha) + (x.fecha === d.hoy ? ' (hoy)' : '') + '</b>' +
         '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' hechas · ' + x.ped + ' con pedido</div>' +
-        (x.corto ? '<div class="jtx ' + (x.just ? '' : 'bad') + '">Plan corto (mínimo ' + d.minVis + ')' + (x.just ? ', justificado' : ', sin justificar') + '</div>' : '') + '</div>' +
+        (x.corto ? '<div class="jtx ' + (x.just ? '' : 'bad') + '">Plan corto' + (x.just ? ', justificado' : ', sin justificar') + '</div>' : '') + '</div>' +
         '<button class="sec" data-irdia="' + x.fecha + '">Ver día</button></div>' +
         '<div class="fila" style="margin-top:8px"><span class="pill ' + (x.exc ? 'wa' : 'ok') + '">' + (x.exc ? esc(x.exc) : 'Ruta normal') + '</span>' +
         '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { return '<option value="' + t + '"' + (t === x.exc ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
@@ -436,18 +436,24 @@ function tocaF(frec, n) {
   if (frec && frec.charAt(0) === 'M') return Math.ceil((n % 100) / 7) === Number(frec.charAt(1));
   return true;
 }
+function cuentaDia(f, ds) {
+  var n = 0;
+  S.rb.clientes.forEach(function (x) { if (x[4].some(function (sl) { return sl[0] === ds && tocaF(sl[1], f); })) n++; });
+  return n;
+}
 function conteoSemanas() {
-  var min = U.minVis || 10, lunes = sumar(U.hoy, 1 - (aFecha(U.hoy).getDay() || 7)), h = '';
+  var min = U.minVis || 10, pc = U.pctNormal || 0.75, lunes = sumar(U.hoy, 1 - (aFecha(U.hoy).getDay() || 7)), h = '', tot = 0;
+  for (var k = 0; k < 20; k++) tot += cuentaDia(sumar(lunes, Math.floor(k / 5) * 7 + k % 5), k % 5 + 1);
+  var normal = tot / 20;
   [['Esta semana', 0], ['Próxima semana', 7]].forEach(function (w) {
-    h += '<div style="margin-top:8px"><b>' + w[0] + '</b> <span class="sub">(mínimo ' + min + ' por día, lunes a viernes)</span><div class="cnt num">';
+    h += '<div style="margin-top:8px"><b>' + w[0] + '</b> <span class="sub">(visitas programadas, lunes a viernes)</span><div class="cnt num">';
     for (var i = 0; i < 5; i++) {
-      var f = sumar(lunes, w[1] + i), n = 0;
-      S.rb.clientes.forEach(function (x) { if (x[4].some(function (sl) { return sl[0] === i + 1 && tocaF(sl[1], f); })) n++; });
-      h += '<span class="' + (n < min ? 'c' : '') + '">' + DIASC[i + 1].slice(0, 3) + ' ' + aFecha(f).getDate() + ': ' + n + '</span>';
+      var f = sumar(lunes, w[1] + i), n = cuentaDia(f, i + 1);
+      h += '<span class="' + (n < min || n < normal * pc ? 'c' : '') + '">' + DIASC[i + 1].slice(0, 3) + ' ' + aFecha(f).getDate() + ': ' + n + '</span>';
     }
     h += '</div></div>';
   });
-  return h;
+  return h + '<div class="sub" style="margin-top:6px">En rojo: días con menos visitas de lo normal para tu ruta. Esos días tendrás que justificarlos.</div>';
 }
 function listaRB() {
   var q = S.q.toLowerCase(), h = '', F = frecs(), max = U.maxDias || 3;
@@ -489,14 +495,14 @@ function cargaEquipo() {
     var h = '<div class="card"><h1>Equipo</h1>' + navFecha() +
       '<div class="kpis num"><div><b>' + pct(t.hechas, t.plan) + '%</b><span>cumplimiento (' + t.hechas + ' / ' + t.plan + ')</span></div><div><b>' + pct(t.pts, t.atend) + '%</b><span>efectividad</span></div>' +
       '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.cob + '</b><span>cobros</span></div><div><b>' + t.adic + '</b><span>fuera de ruta</span></div><div><b>' + t.act + '</b><span>actividades</span></div></div>' +
-      '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas. Plan corto: menos de ' + d.minVis + ' visitas programadas de lunes a viernes.</div></div>';
+      '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas. Plan corto (lunes a viernes): menos de ' + d.minVis + ' programadas o menos del ' + Math.round(d.pctNormal * 100) + '% de su promedio normal.</div></div>';
     h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Cumplimiento</th><th>Efectividad</th><th>Pedidos</th><th>Cobros</th><th>Cerradas</th><th>Fuera de ruta</th><th>Actividades</th><th>Estado</th></tr></thead><tbody>';
     d.filas.forEach(function (f) {
       var p = pct(f.hechas, f.plan), k, tx;
       if (f.exc) { k = 'mu'; tx = f.exc; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
       else if (!f.marc && !f.act) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
       h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div>' +
-        (f.corto ? '<div class="jtx ' + (f.just ? '' : 'bad') + '">Plan corto (' + f.plan + ')' + (f.just ? ': ' + esc(f.just) : ', sin justificar') + '</div>' : '') + '</td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
+        (f.corto ? '<div class="jtx ' + (f.just ? '' : 'bad') + '">Plan corto: ' + f.plan + ' (su normal: ' + Math.round(f.normal) + ')' + (f.just ? '. ' + esc(f.just) : ', sin justificar') + '</div>' : '') + '</td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
         '<td class="num">' + (f.atend ? pct(f.pts, f.atend) + '%' : '–') + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td>' +
         '<td class="num">' + f.cerr + (f.repet ? ' <span class="pill wa" title="Clientes cerrados también en su visita anterior">' + f.repet + ' repetida' + (f.repet > 1 ? 's' : '') + '</span>' : '') + '</td>' +
         '<td class="num">' + f.adic + '</td><td class="num">' + f.act + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
