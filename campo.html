@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mi Ruta REFANIC</title>
-<meta name="theme-color" content="#0d6b63">
+<title>Mi Plan REFANIC</title>
+<meta name="theme-color" content="#1d3a8a">
 <meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Mi Ruta">
-<link rel="apple-touch-icon" href="icono.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icono.png">
+<meta name="apple-mobile-web-app-title" content="Mi Plan">
+<link rel="apple-touch-icon" href="icono_plan.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono_plan.png">
 <link rel="manifest" href="campo.webmanifest">
 <style>
 :root{--bg:#eef2f1;--sf:#fff;--sf2:#f5f8f7;--ln:#d6dedc;--ink:#16302d;--mut:#5b6f6c;--ac:#0d6b63;--aci:#fff;--acs:#dcefec;
@@ -81,6 +81,10 @@ th{text-align:left;color:var(--mut);font-size:12px;padding:6px 8px;border-bottom
 td{padding:8px;border-bottom:1px solid var(--ln)}
 #toast{position:fixed;left:12px;right:12px;bottom:84px;margin:auto;max-width:480px;background:var(--bad);color:#fff;border-radius:11px;padding:11px 14px;font-weight:600;display:none;z-index:9}
 .okg{color:var(--ok);font-size:12px;font-weight:700;margin-left:6px}
+.marca{display:flex;align-items:center;gap:9px;margin-bottom:6px}.marca svg{flex:none;border-radius:8px}.marca small{display:block;color:var(--mut);font-size:11.5px;line-height:1.1}.marca b{font-size:17px}
+.permc{border-left:4px solid var(--wa)}.permc.okp{border-left-color:var(--ok)}.permc.badp{border-left-color:var(--bad)}
+.pl{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--ln);font-size:14px}.pl:first-of-type{border-top:0}
+.kpis small{font-size:12px;color:var(--mut);font-weight:600}
 .cargando{text-align:center;color:var(--mut);padding:30px 0}
 </style>
 </head>
@@ -91,6 +95,8 @@ td{padding:8px;border-bottom:1px solid var(--ln)}
 <script>
 var API = 'https://script.google.com/macros/s/AKfycbyPv3S7k_WbKR2Xl1jOq0jpYnJY3ZXifyVDwFTHIUphiCdZ2u6LV02Kl_qI1LAMaBuV/exec';
 var K = '', PIN = '', U = null;
+var ICO = "<svg width='34' height='34' aria-hidden='true' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='#1d3a8a'/><rect x='116' y='134' width='280' height='256' rx='30' fill='#ffffff'/><rect x='116' y='134' width='280' height='70' rx='30' fill='#3f7fd9'/><rect x='116' y='175' width='280' height='30' fill='#3f7fd9'/><rect x='176' y='104' width='26' height='64' rx='13' fill='#ffffff'/><rect x='310' y='104' width='26' height='64' rx='13' fill='#ffffff'/><path d='M196 296 l38 38 l84 -88' stroke='#1d3a8a' stroke-width='30' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>";
+function marca(t) { return '<div class="marca">' + ICO + '<div><small>Gestor Comercial REFANIC</small><b>' + esc(t) + '</b></div></div>'; }
 try {
   K = (new URLSearchParams(location.search).get('k') || '').replace(/[^A-Za-z0-9]/g, '');
   if (K) localStorage.setItem('clave', K); else K = localStorage.getItem('clave') || '';
@@ -98,13 +104,13 @@ try {
 var S = { tab: 'hoy', ruta: '', fecha: 0, dia: null, rb: null, cambios: {}, filtro: 'act', q: '', add: '', cart: null, qa: '' };
 var ESTS = [['pedido', 'Con pedido'], ['sin', 'Sin pedido'], ['cerrada', 'Cerrada'], ['no', 'No visitada']];
 var HECHAS = { pedido: 1, sin: 1, cerrada: 1 };
-var TIPOS = { cartera: 'Cliente de mi cartera', nuevo: 'Cliente nuevo', fuera: 'Cliente fuera de cartera', banco: 'Banco / depósito', otra: 'Otra actividad' };
-var EXC = ['', 'Feriado', 'Vacaciones', 'Cambio de zona', 'Otro'];
+var TIPOS = { cartera: 'Cliente de mi cartera', tel: 'Pedido por teléfono / WhatsApp', nuevo: 'Cliente nuevo', fuera: 'Cliente fuera de cartera', banco: 'Banco / depósito', otra: 'Otra actividad' };
+var EXC = ['', 'Vacaciones', 'Permiso especial', 'Cita médica / incapacidad', 'Feriado', 'Cambio de zona', 'Otro'];
 function semIso(n) { var d = aFecha(n); d.setDate(d.getDate() + 4 - (d.getDay() || 7)); var y0 = new Date(d.getFullYear(), 0, 1, 12); return Math.ceil(((d - y0) / 86400000 + 1) / 7); }
 function frecs() {
   var impar = semIso(U.hoy) % 2 === 1;
   return [['S', 'Semanal'], [impar ? 'Q1' : 'Q2', 'Quincenal: esta semana'], [impar ? 'Q2' : 'Q1', 'Quincenal: próx. semana'],
-    ['M1', 'Mensual: días 1 al 7'], ['M2', 'Mensual: días 8 al 14'], ['M3', 'Mensual: días 15 al 21'], ['M4', 'Mensual: días 22 al 28']];
+    ['M1', 'Mensual: días 1 al 7'], ['M2', 'Mensual: días 8 al 14'], ['M3', 'Mensual: días 15 al 21'], ['M4', 'Mensual: días 22 al 28'], ['D', 'Diario (cobro), lun a vie']];
 }
 var DIASC = ['Sin día', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -134,13 +140,13 @@ function cargando() { $('main').innerHTML = '<div class="cargando">Cargando…</
 
 /* ---------- inicio y PIN ---------- */
 function inicio() {
-  if (!K) { $('main').innerHTML = '<div class="card"><h1>Mi Ruta REFANIC</h1><p>Abre la app desde tu enlace personal. Si no lo tienes, pídelo a tu supervisora.</p></div>'; return; }
+  if (!K) { $('main').innerHTML = '<div class="card">' + marca('Mi Plan') + '<p>Abre la app desde tu enlace personal. Si no lo tienes, pídelo a tu supervisora.</p></div>'; return; }
   PIN = guardaLocal('pin_' + K) || '';
   if (PIN) entrar(); else pidePin('');
 }
 function pidePin(err) {
   $('nav').hidden = true;
-  $('main').innerHTML = '<div class="card"><h1>Mi Ruta REFANIC</h1><p class="sub">Escribe tu PIN de 4 dígitos.</p>' +
+  $('main').innerHTML = '<div class="card">' + marca('Mi Plan') + '<p class="sub">Escribe tu PIN de 4 dígitos.</p>' +
     (err ? '<div class="msg">' + esc(err) + '</div>' : '') +
     '<form id="fpin" style="display:flex;gap:8px;margin-top:10px"><input type="tel" id="pin" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN" style="flex:1;min-width:0;font-size:20px;letter-spacing:.3em">' +
     '<button class="pri" type="submit">Entrar</button></form></div>';
@@ -185,7 +191,7 @@ function navFecha() {
 
 /* ---------- Mi dia ---------- */
 function cargaDia() {
-  S.add = ''; S.qa = ''; S.editJust = false; S.jmot = ''; S.jdet = null;
+  S.add = ''; S.qa = ''; S.editJust = false; S.jmot = ''; S.jdet = null; S.cierre = ''; S.ptipo = ''; S.repsel = null;
   call('dia', { ruta: S.ruta, fecha: S.fecha }).then(function (d) { S.dia = d; pintaDia(); }).catch(falla);
 }
 function resumen() {
@@ -202,7 +208,8 @@ function resumen() {
 function chips(txt) { return txt.split('|').filter(Boolean).map(function (f) { return '<em>' + esc(f) + '</em>'; }).join(''); }
 function tarjeta(x, i) {
   var ed = S.dia.editable ? '' : ' disabled', sel = x.mot ? x.mot.split('|') : [];
-  var h = '<div class="card cli ' + esc(x.est) + '" id="cli' + i + '"><div><b>' + esc(x.n) + '</b> <span class="sub num">' + esc(x.c) + '</span>' + (x.extra ? ' <span class="pill mu">Fuera de ruta</span>' : '') + '<span class="okg" id="okg' + i + '" aria-live="polite"></span></div>';
+  var h = '<div class="card cli ' + esc(x.est) + '" id="cli' + i + '"><div><b>' + esc(x.n) + '</b> <span class="sub num">' + esc(x.c) + '</span>' + (x.extra ? ' <span class="pill mu">Fuera de ruta</span>' : '') + (x.diario ? ' <span class="pill mu">Cobro diario</span>' : '') + (x.rep ? ' <span class="pill mu">Reprogramado del ' + fechaTxt(x.rep) + '</span>' : '') +
+    (x.extra && S.dia.editable ? '<button class="x" data-quitar="' + i + '" aria-label="Quitar este cliente de hoy" style="float:right">×</button>' : '') + '<span class="okg" id="okg' + i + '" aria-live="polite"></span></div>';
   if (x.pend) h += '<div class="foco">En foco, pendiente:' + chips(x.pend) + '</div>';
   if (x.nc) h += '<div class="foco nc">No compra:' + chips(x.nc) + '</div>';
   h += '<div class="acts">' + ESTS.map(function (e) {
@@ -221,8 +228,9 @@ function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
 function cabeceraDia() {
   var r = resumen();
   $('pbar').style.width = pct(r.hechas, r.prog) + '%';
-  $('kcum').textContent = r.hechas + ' / ' + r.prog; $('kefe').textContent = pct(r.pts, r.atend) + '%';
-  $('kped').textContent = r.ped; $('kcob').textContent = r.cob;
+  var tel = S.dia.acts.filter(function (a) { return a.tipo === 'tel'; }).length;
+  $('kcum').innerHTML = r.hechas + ' / ' + r.prog + (r.adic ? ' <small>+' + r.adic + ' fuera de ruta</small>' : ''); $('kefe').textContent = pct(r.pts, r.atend) + '%';
+  $('kped').innerHTML = r.ped + (tel ? ' <small>+' + tel + ' por teléfono</small>' : ''); $('kcob').textContent = r.cob;
   $('fin').innerHTML = r.prog && r.marcP === r.prog ? '<div class="msg ok">Ruta completa: ' + r.hechas + ' de ' + r.prog + ' visitas hechas, ' + r.ped + ' con pedido y ' + r.cob + ' cobros' + (r.adic ? ', más ' + r.adic + ' fuera de ruta' : '') + '.</div>' : '';
 }
 function pintaActs() {
@@ -240,8 +248,8 @@ function pintaAgregar() {
   if (!S.add) return '<button class="sec" data-add="1" style="padding:12px;width:100%">+ Agregar visita o actividad</button>';
   var h = '<div class="card"><div class="fila"><h3 style="margin:0">Agregar</h3><button class="x" data-add="0" aria-label="Cerrar">×</button></div>' +
     '<div class="chips" style="margin:8px 0">' + Object.keys(TIPOS).map(function (k) { return '<button data-tipo="' + k + '" aria-pressed="' + (S.add === k) + '">' + TIPOS[k] + '</button>'; }).join('') + '</div>';
-  if (S.add === 'cartera') {
-    h += '<div class="sub" style="margin-bottom:6px">Busca un cliente de tu ruta que no estaba programado hoy. Cuenta en tu efectividad.</div>' +
+  if (S.add === 'cartera' || S.add === 'tel') {
+    h += '<div class="sub" style="margin-bottom:6px">' + (S.add === 'tel' ? 'Para pedidos que te hicieron por teléfono o WhatsApp, sin visita. Suma en tus pedidos del día; no cuenta como visita ni en tu efectividad.' : 'Busca un cliente de tu ruta que no estaba programado hoy. Cuenta en tu efectividad.') + '</div>' +
       '<input type="search" id="qa" placeholder="Nombre o código" value="' + esc(S.qa) + '" aria-label="Buscar cliente"><div id="resa" style="margin-top:6px"></div>';
   } else if (S.add !== '1') {
     if (S.add === 'nuevo' || S.add === 'fuera') h += '<input type="text" id="an" maxlength="120" placeholder="Nombre del cliente" aria-label="Nombre del cliente" style="margin-bottom:6px">';
@@ -256,32 +264,98 @@ function listaAgregar() {
   var q = S.qa.trim().toLowerCase();
   if (!S.cart) { z.innerHTML = '<div class="sub">Cargando clientes…</div>'; return; }
   if (q.length < 2) { z.innerHTML = '<div class="sub">Escribe al menos dos letras.</div>'; return; }
-  var ya = {}; S.dia.items.forEach(function (x) { ya[x.c] = 1; });
+  var ya = {}; if (S.add === 'cartera') S.dia.items.forEach(function (x) { ya[x.c] = 1; });
   var h = '', n = 0;
   S.cart.forEach(function (c) {
     if (n >= 15 || ya[c[0]] || (c[1].toLowerCase().indexOf(q) < 0 && c[0].indexOf(q) < 0)) return;
-    n++; h += '<div class="act"><div><b>' + esc(c[1]) + '</b><div class="sub num">' + esc(c[0]) + (c[2] ? ' · ' + esc(c[2]) : '') + '</div></div><button class="sec" data-addcli="' + esc(c[0]) + '">Agregar</button></div>';
+    n++; h += '<div class="act"><div><b>' + esc(c[1]) + '</b><div class="sub num">' + esc(c[0]) + (c[2] ? ' · ' + esc(c[2]) : '') + '</div></div><button class="sec" ' + (S.add === 'tel' ? 'data-telcli' : 'data-addcli') + '="' + esc(c[0]) + '">' + (S.add === 'tel' ? 'Registrar' : 'Agregar') + '</button></div>';
   });
   z.innerHTML = h || '<div class="sub">No hay más clientes con ese nombre en tu ruta.</div>';
 }
 function pintaDia() {
-  var d = S.dia, h = '<div class="card"><div class="fila"><h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1></div>' + selRuta() + navFecha() +
-    '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kcum"></b><span>visitas hechas</span></div><div><b id="kefe"></b><span>efectividad</span></div>' +
+  var d = S.dia, h = '<div class="card">' + marca('Mi Plan') + '<div class="fila"><h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1></div>' + selRuta() + navFecha() +
+    '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kcum"></b><span>visitas de tu plan</span></div><div><b id="kefe"></b><span>efectividad</span></div>' +
     '<div><b id="kped"></b><span>con pedido</span></div><div><b id="kcob"></b><span>cobros</span></div></div></div>';
   if (d.exc) h += '<div class="msg">Día marcado como: ' + esc(d.exc) + '</div>';
-  h += '<div id="zjust"></div>';
+  h += '<div id="zperm"></div><div id="zjust"></div>';
   if (!d.editable) h += '<div class="msg">Este día es solo de consulta.</div>';
   if (!d.items.length) h += '<div class="card">No hay farmacias programadas para este día. Asigna tus clientes en <b>Mi ruta</b>.</div>';
   var mun = null;
   d.items.forEach(function (x, i) { if (x.m !== mun) { mun = x.m; h += '<div class="slot">' + esc(mun || 'Sin municipio') + '</div>'; } h += tarjeta(x, i); });
-  h += '<div id="fin"></div><div id="zacts" style="display:flex;flex-direction:column;gap:10px"></div>';
+  h += '<div id="fin"></div><div id="zacts" style="display:flex;flex-direction:column;gap:10px"></div><div id="zcierre"></div>';
   $('main').innerHTML = h;
   $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
-  cabeceraDia(); pintaActs(); pintaJust();
+  cabeceraDia(); pintaActs(); pintaJust(); pintaPerm();
+}
+/* ---------- Cerrar mi dia (permisos) ---------- */
+var ESTP = { pendiente: 'esperando aprobación de tu supervisora', aprobado: 'aprobado', rechazado: 'rechazado' };
+function pendientesPlan() { return S.dia.items.filter(function (x) { return !x.extra && !x.est; }); }
+function pintaPerm() {
+  var d = S.dia, p = d.perm, h = '';
+  if (p) {
+    var k = p.estado === 'aprobado' ? 'okp' : p.estado === 'rechazado' ? 'badp' : '';
+    h = '<div class="card permc ' + k + '"><b>' + (p.alcance === 'medio' ? 'Día cerrado desde las ' + esc(p.desde) : 'Día completo') + ': ' + esc(p.tipo) + '</b>' +
+      '<div class="sub">Estado: ' + esc(ESTP[p.estado] || p.estado) + (p.motivo ? '. Motivo: ' + esc(p.motivo) : '') + '</div>' + (p.coment ? '<div class="sub">' + esc(p.coment) + '</div>' : '') +
+      (p.alcance === 'medio' && p.estado !== 'rechazado' ? '<div class="sub" style="margin-top:4px">Si se aprueba, las visitas que dejaste pendientes no cuentan en tu cumplimiento.</div>' : '') +
+      (p.estado === 'rechazado' ? '<div class="sub" style="margin-top:4px">Las visitas pendientes cuentan como no visitadas.</div>' : '') +
+      (p.estado === 'pendiente' && d.editable ? '<button class="sec" data-cancperm="' + esc(p.id) + '" style="margin-top:8px;font-size:12.5px;padding:5px 10px">Cancelar solicitud</button>' : '') + '</div>';
+    if (p.alcance === 'medio' && p.estado !== 'rechazado' && d.editable && pendientesPlan().length) h += pintaReprog();
+  }
+  $('zperm').innerHTML = h;
+  var c = '';
+  if (!p && d.editable && d.fecha === U.hoy && !d.exc && d.items.some(function (x) { return !x.extra; })) {
+    if (!S.cierre) c = '<button class="sec" data-cierre="1" style="padding:12px;width:100%;margin-top:6px">Cerrar mi día (vacaciones o permiso)</button>';
+    else {
+      var ahora = new Date(), hh = ('0' + ahora.getHours()).slice(-2) + ':' + ('0' + ahora.getMinutes()).slice(-2);
+      c = '<div class="card"><div class="fila"><h3 style="margin:0">Cerrar mi día</h3><button class="x" data-cierre="0" aria-label="Cerrar">×</button></div>' +
+        '<div class="sub" style="margin:4px 0 8px">Úsalo si te retiras antes por vacaciones, permiso o cita. Tu supervisora lo aprueba.</div>' +
+        '<div class="chips">' + (U.tiposPerm || []).filter(function (t) { return t !== 'Feriado' && t !== 'Cambio de zona'; }).map(function (t) { return '<button data-ptipo="' + esc(t) + '" aria-pressed="' + (S.ptipo === t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' +
+        '<label class="sub" style="display:block;margin-top:8px">Desde qué hora <input type="time" id="phora" value="' + hh + '"></label>' +
+        '<input type="text" id="pcom" maxlength="200" placeholder="Comentario (opcional)" aria-label="Comentario" style="margin-top:8px">' +
+        '<div class="sub" style="margin:8px 0">Tienes ' + pendientesPlan().length + ' visitas pendientes. Después podrás reprogramarlas.</div>' +
+        '<button class="pri" id="btnperm" style="width:100%">Enviar a mi supervisora</button></div>';
+    }
+  }
+  $('zcierre').innerHTML = c;
+}
+function diasHabiles() {
+  var out = [], f = U.hoy;
+  while (out.length < 6) { f = sumar(f, 1); var g = aFecha(f).getDay(); if (g !== 0) out.push(f); }
+  return out;
+}
+function pintaReprog() {
+  var pend = pendientesPlan();
+  if (!S.repsel) { S.repsel = {}; pend.forEach(function (x) { S.repsel[x.c] = 1; }); }
+  var DS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  return '<div class="card"><h3>Clientes que quedaron pendientes (' + pend.length + ')</h3>' +
+    pend.map(function (x) { return '<label class="pl"><input type="checkbox" data-rsel="' + esc(x.c) + '"' + (S.repsel[x.c] ? ' checked' : '') + '> ' + esc(x.n) + '</label>'; }).join('') +
+    '<div class="fila" style="margin-top:8px;gap:8px"><select id="rfecha" aria-label="Nueva fecha">' + diasHabiles().map(function (f) { return '<option value="' + f + '">' + DS[aFecha(f).getDay()] + ' ' + fechaTxt(f) + '</option>'; }).join('') + '</select>' +
+    '<button class="pri" id="btnrep">Reprogramar</button></div>' +
+    '<button class="sec" id="btnwa" style="width:100%;margin-top:8px">Avisar a mi televentas por WhatsApp</button></div>';
+}
+function enviaPerm(b) {
+  if (!S.ptipo) { toast('Elige el motivo: vacaciones, permiso o cita.'); return; }
+  var p = { ruta: S.ruta, fecha: S.dia.fecha, tipo: S.ptipo, alcance: 'medio', desde: $('phora').value, coment: $('pcom').value.trim() };
+  b.disabled = true; b.textContent = 'Enviando…';
+  call('permiso', p).then(function (r) { S.dia.perm = r; S.cierre = ''; pintaPerm(); }).catch(function (e) { b.disabled = false; b.textContent = 'Enviar a mi supervisora'; falla(e); });
+}
+function reprograma(b) {
+  var cs = Object.keys(S.repsel).filter(function (c) { return S.repsel[c]; });
+  if (!cs.length) { toast('Marca al menos un cliente.'); return; }
+  var f = Number($('rfecha').value); b.disabled = true;
+  call('reprogramar', { ruta: S.ruta, origen: S.dia.fecha, fecha: f, clientes: cs }).then(function (n) {
+    b.disabled = false; toast(n + ' cliente' + (n === 1 ? '' : 's') + ' reprogramado' + (n === 1 ? '' : 's') + ' para el ' + fechaTxt(f) + '.');
+    $('toast').style.background = 'var(--ok)'; setTimeout(function () { $('toast').style.background = ''; }, 4600);
+  }).catch(function (e) { b.disabled = false; falla(e); });
+}
+function avisaWA() {
+  var cs = pendientesPlan().filter(function (x) { return S.repsel && S.repsel[x.c]; });
+  var t = 'Hola, hoy ' + fechaTxt(S.dia.fecha) + ' no pude visitar estos clientes. ¿Me ayudas a llamarlos?\n' + cs.map(function (x) { return '- ' + x.n + ' (' + x.c + ')'; }).join('\n');
+  window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
 }
 function pintaJust() {
   var d = S.dia, z = $('zjust'); if (!z) return;
-  if (!d.corto) { z.innerHTML = ''; return; }
+  if (!d.corto || (d.perm && d.perm.estado !== 'rechazado')) { z.innerHTML = ''; return; }
   var j = d.just, n = d.plan + ' visita' + (d.plan === 1 ? '' : 's') + ' programada' + (d.plan === 1 ? '' : 's'), h;
   if (j && !S.editJust) {
     h = '<div class="card just okj"><b>Plan corto justificado</b> <span class="sub">(' + n + ')</span>' +
@@ -329,13 +403,16 @@ $('main').addEventListener('click', function (e) {
   if (b.dataset.irdia) { S.fecha = Number(b.dataset.irdia); ir('hoy'); return; }
   if (b.dataset.filtro) { S.filtro = b.dataset.filtro; pintaRB(); return; }
   if (b.id === 'btnguardar') { guardaRB(); return; }
+  if (b.id === 'btndescartar') { S.cambios = {}; cargando(); cargaRB(); return; }
+  if (b.dataset.aprob) { resuelve(b, b.dataset.aprob, true); return; }
+  if (b.dataset.rech) { resuelve(b, b.dataset.rech, false); return; }
   if (b.id === 'btncob') { guardaCobertura(); return; }
   if (b.dataset.addslot !== undefined) { var cc = S.rb.clientes[Number(b.dataset.addslot)]; cc[4].push([0, 'S']); S.cambios[cc[0]] = 1; listaRB(); botonGuardar(); return; }
   if (S.tab !== 'hoy') return;
   if (b.dataset.add !== undefined) { S.add = b.dataset.add === '0' ? '' : '1'; pintaActs(); return; }
   if (b.dataset.tipo) {
     S.add = b.dataset.tipo; pintaActs();
-    if (S.add === 'cartera') {
+    if (S.add === 'cartera' || S.add === 'tel') {
       if (!S.cart) call('ruta', { ruta: S.ruta }).then(function (d) { S.cart = d.clientes; listaAgregar(); }).catch(falla);
       listaAgregar(); $('qa').focus();
     }
@@ -348,6 +425,30 @@ $('main').addEventListener('click', function (e) {
     var el = $('cli' + (S.dia.items.length - 1)); if (el) el.scrollIntoView({ block: 'center' });
     return;
   }
+  if (b.dataset.telcli) {
+    var tc = S.cart.filter(function (z) { return z[0] === b.dataset.telcli; })[0]; if (!tc) return;
+    b.disabled = true;
+    call('actividad', { ruta: S.ruta, fecha: S.dia.fecha, tipo: 'tel', nombre: tc[1] + ' (' + tc[0] + ')', det: '' })
+      .then(function (a) { S.dia.acts.push(a); S.add = ''; S.qa = ''; pintaActs(); cabeceraDia(); }).catch(function (e) { b.disabled = false; falla(e); });
+    return;
+  }
+  if (b.dataset.quitar !== undefined) {
+    var qi = Number(b.dataset.quitar), qx = S.dia.items[qi];
+    var fin = function () { S.dia.items.splice(qi, 1); pintaDia(); };
+    if (qx.est || qx.cob || qx.obs) { b.disabled = true; call('borraVisita', { ruta: S.ruta, fecha: S.dia.fecha, cliente: qx.c }).then(fin).catch(function (e) { b.disabled = false; falla(e); }); }
+    else fin();
+    return;
+  }
+  if (b.dataset.cierre !== undefined) { S.cierre = b.dataset.cierre === '1' ? '1' : ''; pintaPerm(); if (S.cierre) $('zcierre').scrollIntoView({ block: 'center' }); return; }
+  if (b.dataset.ptipo) { var hv = $('phora').value, cv = $('pcom').value; S.ptipo = b.dataset.ptipo; pintaPerm(); $('phora').value = hv; $('pcom').value = cv; return; }
+  if (b.id === 'btnperm') { enviaPerm(b); return; }
+  if (b.id === 'btnrep') { reprograma(b); return; }
+  if (b.id === 'btnwa') { avisaWA(); return; }
+  if (b.dataset.cancperm) {
+    b.disabled = true;
+    call('cancelaPermiso', { ruta: S.ruta, id: b.dataset.cancperm }).then(function () { S.dia.perm = null; S.repsel = null; pintaPerm(); }).catch(function (e) { b.disabled = false; falla(e); });
+    return;
+  }
   if (b.id === 'btnact') { guardaActividad(b); return; }
   if (b.id === 'btnjust') { guardaJust(b); return; }
   if (b.dataset.jmot) { S.jdet = $('jdet') ? $('jdet').value : null; S.jmot = b.dataset.jmot; pintaJust(); return; }
@@ -355,7 +456,7 @@ $('main').addEventListener('click', function (e) {
   if (b.dataset.delact) {
     var id = b.dataset.delact; b.disabled = true;
     call('borraActividad', { ruta: S.ruta, fecha: S.dia.fecha, id: id }).then(function () {
-      S.dia.acts = S.dia.acts.filter(function (a) { return a.id !== id; }); pintaActs();
+      S.dia.acts = S.dia.acts.filter(function (a) { return a.id !== id; }); pintaActs(); cabeceraDia();
     }).catch(function (e) { b.disabled = false; falla(e); });
     return;
   }
@@ -371,12 +472,14 @@ $('main').addEventListener('click', function (e) {
 $('main').addEventListener('change', function (e) {
   var t = e.target;
   if (t.dataset.obs !== undefined) { var i = Number(t.dataset.obs); S.dia.items[i].obs = t.value; guardaVisita(i); if (S.dia.items[i].est === 'cerrada') $('cli' + i).outerHTML = tarjeta(S.dia.items[i], i); return; }
+  if (t.dataset.rsel) { S.repsel[t.dataset.rsel] = t.checked ? 1 : 0; return; }
   if (t.dataset.exc) {
     call('excepcion', { ruta: S.ruta, fecha: Number(t.dataset.exc), tipo: t.value }).then(cargaSemana).catch(falla); return;
   }
   if (t.dataset.rb) {
     var c = S.rb.clientes[Number(t.dataset.rb)], sl = c[4][Number(t.dataset.k)];
     if (t.dataset.campo === 'dia') sl[0] = Number(t.value); else sl[1] = t.value;
+    if (t.dataset.campo === 'frec' && t.value === 'D') { c[4] = [[1, 'D']]; listaRB(); }
     S.cambios[c[0]] = 1; botonGuardar(); contadorRB();
   }
 });
@@ -397,29 +500,37 @@ function guardaActividad(b) {
 /* ---------- Mi semana ---------- */
 function cargaSemana() {
   call('semana', { ruta: S.ruta, fecha: S.fecha }).then(function (d) {
-    var h = '<div class="card"><h1>Mi semana</h1>' + selRuta() +
+    var h = '<div class="card">' + marca('Mi Plan') + '<h1>Mi semana</h1>' + selRuta() +
       '<div class="fila" style="margin-top:8px"><button class="sec" data-sem="-1" aria-label="Semana anterior">‹</button><b>' + fechaTxt(d.lunes) + ' al ' + fechaTxt(sumar(d.lunes, 5)) +
       '</b><button class="sec" data-sem="1" aria-label="Semana siguiente">›</button></div>' +
-      '<div class="sub" style="margin-top:6px">Se genera sola desde tu ruta base. Marca solo lo que cambia.</div></div>';
+      '<div class="sub" style="margin-top:6px">Se genera sola desde tu ruta base. Para pedir un día libre (vacaciones, permiso), elígelo en la lista del día; tu supervisora lo aprueba.</div></div>';
     d.dias.forEach(function (x) {
       h += '<div class="card"><div class="fila"><div><b>' + x.dia + ' ' + fechaTxt(x.fecha) + (x.fecha === d.hoy ? ' (hoy)' : '') + '</b>' +
         '<div class="sub num">' + x.plan + ' programadas · ' + x.vis + ' hechas · ' + x.ped + ' con pedido</div>' +
         (x.corto ? '<div class="jtx ' + (x.just ? '' : 'bad') + '">Plan corto' + (x.just ? ', justificado' : ', sin justificar') + '</div>' : '') + '</div>' +
         '<button class="sec" data-irdia="' + x.fecha + '">Ver día</button></div>' +
-        '<div class="fila" style="margin-top:8px"><span class="pill ' + (x.exc ? 'wa' : 'ok') + '">' + (x.exc ? esc(x.exc) : 'Ruta normal') + '</span>' +
-        '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { return '<option value="' + t + '"' + (t === x.exc ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
+        '<div class="fila" style="margin-top:8px">' + estSem(x) +
+        '<select data-exc="' + x.fecha + '" aria-label="Excepción del ' + x.dia + '">' + EXC.map(function (t) { var v = x.exc || (x.perm && x.perm.alcance === 'dia' && x.perm.estado === 'pendiente' ? x.perm.tipo : ''); return '<option value="' + t + '"' + (t === v ? ' selected' : '') + '>' + (t || 'Sin excepción') + '</option>'; }).join('') + '</select></div></div>';
     });
     $('main').innerHTML = h;
   }).catch(falla);
 }
 
+function estSem(x) {
+  if (x.exc) return '<span class="pill wa">' + esc(x.exc) + '</span>';
+  var p = x.perm;
+  if (p && p.estado === 'pendiente') return '<span class="pill wa">' + esc(p.tipo) + (p.alcance === 'medio' ? ' (medio día)' : '') + ': por aprobar</span>';
+  if (p && p.estado === 'aprobado' && p.alcance === 'medio') return '<span class="pill wa">Medio día: ' + esc(p.tipo) + '</span>';
+  if (p && p.estado === 'rechazado') return '<span class="pill bad">' + esc(p.tipo) + ': rechazado</span>';
+  return '<span class="pill ok">Ruta normal</span>';
+}
 /* ---------- Mi ruta (ruta base) ---------- */
 function cargaRB() {
   call('ruta', { ruta: S.ruta }).then(function (d) { S.rb = d; S.cambios = {}; pintaRB(); }).catch(falla);
 }
 function pintaRB() {
   var f = [['act', 'Activos'], ['sin', 'Sin día'], ['rea', 'Por reactivar']];
-  $('main').innerHTML = '<div class="card"><h1>Mi ruta base</h1>' + selRuta() +
+  $('main').innerHTML = '<div class="card">' + marca('Mi Plan') + '<h1>Mi ruta base</h1>' + selRuta() +
     '<div class="sub" id="cont" style="margin:6px 0 10px"></div>' +
     '<div class="chips" style="margin-bottom:8px">' + f.map(function (x) { return '<button data-filtro="' + x[0] + '" aria-pressed="' + (S.filtro === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>' +
     '<input type="search" id="buscar" placeholder="Buscar farmacia" value="' + esc(S.q) + '" aria-label="Buscar farmacia"></div>' +
@@ -438,7 +549,7 @@ function tocaF(frec, n) {
 }
 function cuentaDia(f, ds) {
   var n = 0;
-  S.rb.clientes.forEach(function (x) { if (x[4].some(function (sl) { return sl[0] === ds && tocaF(sl[1], f); })) n++; });
+  S.rb.clientes.forEach(function (x) { if (x[4].some(function (sl) { return sl[1] === 'D' ? ds <= 5 : sl[0] === ds && tocaF(sl[1], f); })) n++; });
   return n;
 }
 function conteoSemanas() {
@@ -465,18 +576,19 @@ function listaRB() {
     if (q && x[1].toLowerCase().indexOf(q) < 0) return;
     if (!x[4].length) x[4].push([0, 'S']);
     h += '<div class="rb"><div><b>' + esc(x[1]) + '</b><div class="sub num">' + esc(x[0]) + (x[2] ? ' · ' + esc(x[2]) : '') + (x[3] ? '' : ' <span class="in">Sin compra en 6 meses</span>') + '</div></div><div class="slots">';
+    var diario = x[4].some(function (s) { return s[1] === 'D'; });
     x[4].forEach(function (s, k) {
-      h += '<div class="slot2"><select data-rb="' + i + '" data-k="' + k + '" data-campo="dia" aria-label="Día de visita">' + DIASC.map(function (d, j) { return '<option value="' + j + '"' + (j === s[0] ? ' selected' : '') + '>' + d + '</option>'; }).join('') + '</select>' +
+      h += '<div class="slot2">' + (s[1] === 'D' ? '<select disabled aria-label="Día de visita"><option>Lun a Vie</option></select>' : '<select data-rb="' + i + '" data-k="' + k + '" data-campo="dia" aria-label="Día de visita">' + DIASC.map(function (d, j) { return '<option value="' + j + '"' + (j === s[0] ? ' selected' : '') + '>' + d + '</option>'; }).join('') + '</select>') +
         '<select data-rb="' + i + '" data-k="' + k + '" data-campo="frec" aria-label="Frecuencia">' + F.map(function (r) { return '<option value="' + r[0] + '"' + (r[0] === s[1] ? ' selected' : '') + '>' + r[1] + '</option>'; }).join('') + '</select></div>';
     });
-    if (tiene && x[4].length < max) h += '<button class="sec" data-addslot="' + i + '" style="align-self:flex-start;font-size:12.5px;padding:5px 10px">+ otro día</button>';
+    if (tiene && !diario && x[4].length < max) h += '<button class="sec" data-addslot="' + i + '" style="align-self:flex-start;font-size:12.5px;padding:5px 10px">+ otro día</button>';
     h += '</div></div>';
   });
   $('lista').innerHTML = h || '<div class="sub">No hay clientes en esta vista.</div>';
 }
 function botonGuardar() {
   var n = Object.keys(S.cambios).length;
-  $('zguardar').innerHTML = n ? '<button class="pri" id="btnguardar" style="width:100%">Guardar ' + n + ' cambio' + (n > 1 ? 's' : '') + '</button>' : '';
+  $('zguardar').innerHTML = n ? '<div class="fila" style="gap:8px"><button class="sec" id="btndescartar" style="flex:1">Descartar cambios</button><button class="pri" id="btnguardar" style="flex:2">Guardar ' + n + ' cambio' + (n > 1 ? 's' : '') + '</button></div>' : '';
 }
 function guardaRB() {
   var items = S.rb.clientes.filter(function (x) { return S.cambios[x[0]]; }).map(function (x) {
@@ -490,20 +602,31 @@ function guardaRB() {
 /* ---------- Equipo ---------- */
 function cargaEquipo() {
   call('equipo', { fecha: S.fecha }).then(function (d) {
-    var t = { plan: 0, hechas: 0, atend: 0, pts: 0, ped: 0, cob: 0, cerr: 0, adic: 0, act: 0 };
+    var t = { plan: 0, hechas: 0, atend: 0, pts: 0, ped: 0, cob: 0, cerr: 0, adic: 0, act: 0, tel: 0 };
     d.filas.forEach(function (f) { Object.keys(t).forEach(function (k) { t[k] += f[k]; }); });
-    var h = '<div class="card"><h1>Equipo</h1>' + navFecha() +
+    var h = '<div class="card">' + marca('Equipo') + navFecha() +
       '<div class="kpis num"><div><b>' + pct(t.hechas, t.plan) + '%</b><span>cumplimiento (' + t.hechas + ' / ' + t.plan + ')</span></div><div><b>' + pct(t.pts, t.atend) + '%</b><span>efectividad</span></div>' +
-      '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.cob + '</b><span>cobros</span></div><div><b>' + t.adic + '</b><span>fuera de ruta</span></div><div><b>' + t.act + '</b><span>actividades</span></div></div>' +
+      '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.cob + '</b><span>cobros</span></div><div><b>' + t.adic + '</b><span>fuera de ruta</span></div><div><b>' + t.tel + '</b><span>pedidos por teléfono</span></div><div><b>' + t.act + '</b><span>actividades</span></div></div>' +
       '<div class="sub" style="margin-top:8px">Cumplimiento: visitas hechas (con pedido, sin pedido o cerrada) de las programadas. Efectividad: pedido = 1, solo cobro = ' + d.pesoCobro + ', sobre visitas atendidas. Plan corto (lunes a viernes): menos de ' + d.minVis + ' programadas o menos del ' + Math.round(d.pctNormal * 100) + '% de su promedio normal.</div></div>';
-    h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Cumplimiento</th><th>Efectividad</th><th>Pedidos</th><th>Cobros</th><th>Cerradas</th><th>Fuera de ruta</th><th>Actividades</th><th>Estado</th></tr></thead><tbody>';
+    if (d.pendientes && d.pendientes.length) {
+      var mes = {}; d.filas.forEach(function (f) { mes[f.ruta] = f.permMes; });
+      h += '<div class="card permc"><h3>Permisos por aprobar (' + d.pendientes.length + ')</h3>' + d.pendientes.map(function (p) {
+        return '<div style="padding:8px 0;border-top:1px solid var(--ln)"><b>' + esc(p.nombre) + '</b><div class="sub">' + fechaTxt(p.fecha) + ' · ' + esc(p.tipo) + ' · ' +
+          (p.alcance === 'medio' ? 'medio día desde las ' + esc(p.desde) + ' (' + p.hechas + ' visitas hechas, ' + p.pendientes + ' pendientes)' : 'día completo') + '</div>' +
+          (p.coment ? '<div class="sub">"' + esc(p.coment) + '"</div>' : '') + '<div class="sub">Permisos este mes: ' + (mes[p.ruta] || 0) + '</div>' +
+          '<input type="text" id="rm' + esc(p.id) + '" maxlength="200" placeholder="Motivo (solo si rechazas)" aria-label="Motivo del rechazo" style="margin-top:6px">' +
+          '<div class="fila" style="gap:8px;margin-top:6px"><button class="sec" data-rech="' + esc(p.id) + '" style="flex:1">Rechazar</button><button class="pri" data-aprob="' + esc(p.id) + '" style="flex:1">Aprobar</button></div></div>';
+      }).join('') + '</div>';
+    }
+    h += '<div class="card"><div class="tbl"><table><thead><tr><th>Ruta</th><th>Cumplimiento</th><th>Efectividad</th><th>Pedidos</th><th>Por teléfono</th><th>Cobros</th><th>Cerradas</th><th>Fuera de ruta</th><th>Actividades</th><th>Estado</th></tr></thead><tbody>';
     d.filas.forEach(function (f) {
       var p = pct(f.hechas, f.plan), k, tx;
-      if (f.exc) { k = 'mu'; tx = f.exc; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
+      if (f.exc) { k = 'mu'; tx = f.exc; } else if (f.perm && f.perm.estado === 'pendiente') { k = 'wa'; tx = 'Permiso por aprobar'; }
+      else if (f.perm && f.perm.estado === 'aprobado' && f.perm.alcance === 'medio') { k = 'mu'; tx = 'Medio día: ' + f.perm.tipo; } else if (!f.plan) { k = 'mu'; tx = 'Sin ruta cargada'; }
       else if (!f.marc && !f.act) { k = 'bad'; tx = 'Sin actualizar'; } else if (p >= 80) { k = 'ok'; tx = 'Al día'; } else { k = 'wa'; tx = 'En curso'; }
       h += '<tr><td><b>' + esc(f.nombre) + '</b><div class="sub">' + esc(f.sup) + '</div>' +
-        (f.corto ? '<div class="jtx ' + (f.just ? '' : 'bad') + '">Plan corto: ' + f.plan + ' (su normal: ' + Math.round(f.normal) + ')' + (f.just ? '. ' + esc(f.just) : ', sin justificar') + '</div>' : '') + '</td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' : '–') + '</td>' +
-        '<td class="num">' + (f.atend ? pct(f.pts, f.atend) + '%' : '–') + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.cob + '</td>' +
+        (f.corto ? '<div class="jtx ' + (f.just ? '' : 'bad') + '">Plan corto: ' + f.plan + ' (su normal: ' + Math.round(f.normal) + ')' + (f.just ? '. ' + esc(f.just) : ', sin justificar') + '</div>' : '') + '</td><td class="num">' + (f.plan ? p + '% <span class="sub">(' + f.hechas + '/' + f.plan + ')</span>' + (f.diario ? '<div class="sub">incl. ' + f.diario + ' cobro diario</div>' : '') : '–') + '</td>' +
+        '<td class="num">' + (f.atend ? pct(f.pts, f.atend) + '%' : '–') + '</td><td class="num">' + f.ped + '</td><td class="num">' + f.tel + '</td><td class="num">' + f.cob + '</td>' +
         '<td class="num">' + f.cerr + (f.repet ? ' <span class="pill wa" title="Clientes cerrados también en su visita anterior">' + f.repet + ' repetida' + (f.repet > 1 ? 's' : '') + '</span>' : '') + '</td>' +
         '<td class="num">' + f.adic + '</td><td class="num">' + f.act + '</td><td><span class="pill ' + k + '">' + esc(tx) + '</span></td></tr>';
     });
@@ -520,6 +643,12 @@ function cargaEquipo() {
     $('main').innerHTML = h;
     $('lblfecha').textContent = d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === U.hoy ? ' (hoy)' : '');
   }).catch(falla);
+}
+function resuelve(b, id, ok) {
+  var m = $('rm' + id) ? $('rm' + id).value.trim() : '';
+  if (!ok && !m) { toast('Escribe el motivo del rechazo.'); return; }
+  b.disabled = true;
+  call('resolverPermiso', { id: id, ok: ok, motivo: m }).then(cargaEquipo).catch(function (e) { b.disabled = false; falla(e); });
 }
 function guardaCobertura() {
   var n = function (id) { return Number($(id).value.replace(/-/g, '')); };

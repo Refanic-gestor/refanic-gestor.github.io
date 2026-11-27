@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Televentas REFANIC</title>
-<meta name="theme-color" content="#0d6b63">
+<meta name="theme-color" content="#1d3a8a">
 <meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Televentas">
-<link rel="apple-touch-icon" href="icono.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icono.png">
+<link rel="apple-touch-icon" href="icono_tv.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono_tv.png">
 <link rel="manifest" href="televentas.webmanifest">
 <style>
 :root{--bg:#eef2f1;--sf:#fff;--sf2:#f5f8f7;--ln:#d6dedc;--ink:#16302d;--mut:#5b6f6c;--ac:#0d6b63;--aci:#fff;--acs:#dcefec;
@@ -70,6 +70,7 @@ td{padding:8px;border-bottom:1px solid var(--ln)}
 .okg{color:var(--ok);font-size:12px;font-weight:700;margin-left:6px}
 .promo{background:var(--acs);border-color:transparent}.promo b{color:var(--ac)}
 .cargando{text-align:center;color:var(--mut);padding:30px 0}
+.marca{display:flex;align-items:center;gap:9px;margin-bottom:6px}.marca svg{flex:none;border-radius:8px}.marca small{display:block;color:var(--mut);font-size:11.5px;line-height:1.1}.marca b{font-size:17px}
 </style>
 </head>
 <body>
@@ -79,6 +80,8 @@ td{padding:8px;border-bottom:1px solid var(--ln)}
 <script>
 var API = 'https://script.google.com/macros/s/AKfycbwSi9NPmVhAW-6dQMskPCnxMXz-NlLAn4DFNhGi1CBAOpztWEmBi60QempZcW4DJlepWg/exec';
 var K = '', PIN = '', U = null;
+var ICO = "<svg width='34' height='34' aria-hidden='true' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='#1d3a8a'/><path d='M120 270 a136 136 0 0 1 272 0' stroke='#ffffff' stroke-width='30' fill='none'/><rect x='88' y='236' width='60' height='104' rx='22' fill='#ffffff'/><rect x='364' y='236' width='60' height='104' rx='22' fill='#ffffff'/><path d='M146 330 q10 92 100 100' stroke='#ffffff' stroke-width='22' fill='none' stroke-linecap='round'/><circle cx='252' cy='430' r='20' fill='#ffffff'/><path d='M256 168 a104 100 0 1 1 -6 200 l-2 0 l-40 26 l12 -38 a104 100 0 0 1 36 -188 z' fill='#2f8fd8'/><circle cx='212' cy='268' r='17' fill='#ffffff'/><circle cx='258' cy='268' r='17' fill='#ffffff'/><circle cx='304' cy='268' r='17' fill='#ffffff'/></svg>";
+function marca(t) { return '<div class="marca">' + ICO + '<div><small>Gestor Comercial REFANIC</small><b>' + esc(t) + '</b></div></div>'; }
 try {
   K = (new URLSearchParams(location.search).get('k') || '').replace(/[^A-Za-z0-9]/g, '');
   if (K) localStorage.setItem('clave', K); else K = localStorage.getItem('clave') || '';
@@ -111,13 +114,13 @@ function cargando() { $('main').innerHTML = '<div class="cargando">Cargando…</
 
 /* ---------- inicio y PIN ---------- */
 function inicio() {
-  if (!K) { $('main').innerHTML = '<div class="card"><h1>Televentas REFANIC</h1><p>Abre la app desde tu enlace personal. Si no lo tienes, pídelo a tu supervisor.</p></div>'; return; }
+  if (!K) { $('main').innerHTML = '<div class="card">' + marca('Televentas') + '<p>Abre la app desde tu enlace personal. Si no lo tienes, pídelo a tu supervisor.</p></div>'; return; }
   PIN = guardaLocal('pin_' + K) || '';
   if (PIN) entrar(); else pidePin('');
 }
 function pidePin(err) {
   $('nav').hidden = true;
-  $('main').innerHTML = '<div class="card"><h1>Televentas REFANIC</h1><p class="sub">Escribe tu PIN de 4 dígitos.</p>' +
+  $('main').innerHTML = '<div class="card">' + marca('Televentas') + '<p class="sub">Escribe tu PIN de 4 dígitos.</p>' +
     (err ? '<div class="msg">' + esc(err) + '</div>' : '') +
     '<form id="fpin" style="display:flex;gap:8px;margin-top:10px"><input type="tel" id="pin" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="PIN" style="flex:1;min-width:0;font-size:20px;letter-spacing:.3em">' +
     '<button class="pri" type="submit">Entrar</button></form></div>';
@@ -187,7 +190,7 @@ function cabecera() {
   $('kped').textContent = r.ped; $('kfoco').textContent = r.foco; $('kof').textContent = r.of;
 }
 function pintaDia() {
-  var h = '<div class="card"><h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1><div class="sub">' + U.dia + ' ' + fechaTxt(U.hoy) + '</div>' +
+  var h = '<div class="card">' + marca('Televentas') + '<h1>Hola, ' + esc(U.nombre.split(' ')[0]) + '</h1><div class="sub">' + U.dia + ' ' + fechaTxt(U.hoy) + '</div>' +
     '<div class="bar"><i id="pbar"></i></div><div class="kpis num"><div><b id="kefe"></b><span>contactos efectivos</span></div><div><b id="kges"></b><span>no contestó</span></div>' +
     '<div><b id="kped"></b><span>con pedido</span></div><div><b id="kfoco"></b><span>pedidos con foco</span></div><div><b id="kof"></b><span>ofertas</span></div></div></div>';
   U.promos.forEach(function (p) { h += '<div class="card promo"><b>Promoción de hoy: ' + esc(p.t) + '</b><div>' + esc(p.x) + '</div></div>'; });
@@ -245,7 +248,7 @@ function cargaEquipo() {
   call('equipo', { fecha: S.fecha }).then(function (d) {
     var t = { ges: 0, efe: 0, ped: 0, of: 0, foco: 0, meta: 0 };
     d.filas.forEach(function (f) { t.ges += f.ges; t.efe += f.efe; t.ped += f.ped; t.of += f.of; t.foco += f.foco; t.meta += f.meta; });
-    var h = '<div class="card"><h1>Equipo de televentas</h1><div class="fila" style="margin-top:8px"><button class="sec" data-mov="-1" aria-label="Día anterior">‹</button>' +
+    var h = '<div class="card">' + marca('Televentas') + '<h1>Equipo de televentas</h1><div class="fila" style="margin-top:8px"><button class="sec" data-mov="-1" aria-label="Día anterior">‹</button>' +
       '<b>' + d.dia + ' ' + fechaTxt(d.fecha) + (d.fecha === d.hoy ? ' (hoy)' : '') + '</b><button class="sec" data-mov="1" aria-label="Día siguiente">›</button></div>' +
       '<div class="kpis num"><div><b>' + t.efe + ' / ' + t.meta + '</b><span>contactos efectivos</span></div><div><b>' + (t.ges - t.efe) + '</b><span>no contestó</span></div>' +
       '<div><b>' + t.ped + '</b><span>con pedido</span></div><div><b>' + t.foco + '</b><span>pedidos con foco</span></div><div><b>' + t.of + '</b><span>ofertas</span></div></div></div>';
